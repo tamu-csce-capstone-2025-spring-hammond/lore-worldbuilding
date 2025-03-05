@@ -75,3 +75,58 @@ function getAccessToken() {
   var json = JSON.parse(response.getContentText());
   return json.access_token;
 }
+
+//Read Data from Firestore
+
+//Read Firestore Data based on collection name ("Characters", "Events", "Locations") FOR NOW
+function getFirestoreData(collection) {
+  var url = FIREBASE_URL + collection;
+  
+  var options = {
+    method: "get",
+    headers: {
+      Authorization: "Bearer " + getAccessToken()
+    }
+  };
+
+  var response = UrlFetchApp.fetch(url, options);
+  var jsonData = JSON.parse(response.getContentText());
+
+  if (!jsonData.documents) {
+    return []; // Return empty array if no documents found
+  }
+
+  // Extract relevant fields from Firestore response
+  var result = jsonData.documents.map(doc => {
+    var fields = doc.fields;
+    return fields.Name.stringValue; // Adjust this based on Firestore structure
+  });
+
+  Logger.log(result);
+  return result;
+}
+
+//Will change have to figure out how to get catalogs from Firestore
+function getCatalogs() {
+  return ["Characters", "Events", "Locations"];
+}
+
+function getCatalogData(catalog) {
+  //Debugging: Store logs to return to JavaScript
+  var logs = []; 
+
+  logs.push("getCatalogData() called with catalog: " + catalog);
+
+  if (!catalog) {
+      logs.push("Error: catalog is undefined!");
+      return logs;
+  }
+
+  logs.push("Fetching from Firestore Collection: " + catalog);
+
+  var data = getFirestoreData(catalog);
+  logs.push("Firestore returned: " + JSON.stringify(data));
+
+  //Debugging: Return logs and data to JavaScript
+  return { logs: logs, data: data }; 
+}
