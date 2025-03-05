@@ -33,31 +33,35 @@ function showLandingPage() {
   DocumentApp.getUi().showSidebar(html);
 }
 
+//Show a page depending on chosen option
 function showPage(page) {
-  try{
+  try {
     var htmlFile;
     
     if (page === "viewCatalogs") {
-      htmlFile = "Catalogs_Page"; // Create catalogs_page.html
+      htmlFile = "viewCatalogs"; // This should match viewCatalogs.html
     } else if (page === "viewTimeline") {
-      htmlFile = "Timeline_Page"; // Create timeline_page.html
+      htmlFile = "Timeline_Page"; // This should match Timeline_Page.html
+    } else if(page == "LandingPage") {
+      htmlFile = "LandingPage";
+    } else {
+      throw new Error("Invalid page requested: " + page);
     }
 
+    // Create the template
+    var template = HtmlService.createTemplateFromFile(htmlFile);
+    var html = template.evaluate().setTitle('LORE Worldbuilder');
+    DocumentApp.getUi().showSidebar(html);
 
-    if (htmlFile) {
-      var html = HtmlService.createHtmlOutputFromFile(htmlFile)
-          .setTitle('LORE Worldbuilder');
-      DocumentApp.getUi().showSidebar(html);
-    }
-  }
-  catch(error){
+  } catch (error) {
     Logger.log("Error in showPage(): " + error.message);
+
+    // Show a simple error message
     var errorMessage = HtmlService.createHtmlOutput(
       `<p style="color: red;"> Error: ${error.message}</p>`
     ).setTitle('Error');
     DocumentApp.getUi().showSidebar(errorMessage);
   }
-
 }
 
 function include(filename) {
