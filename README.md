@@ -1,6 +1,6 @@
 # LORE Worldbuilding
 
-Simple overview of use/purpose.
+Artificial intelligence is transforming the writing landscape, generating vast amounts of text and challenging human authors to keep pace. While AI lacks genuine creativity, its efficiency highlights a key struggle for writers—managing the intricate details of expansive narratives. To assist authors in maintaining consistency, we developed LORE, an intuitive worldbuilding tool that tracks characters, locations, and historical events as they are introduced in a manuscript. LORE automatically identifies new elements, prompts users to categorize them, and compiles structured profiles that update dynamically as the story progresses. It monitors character appearances, relationships, and evolving traits over time, ensuring continuity without disrupting the creative process.
 
 ## Description
 
@@ -11,7 +11,8 @@ An in-depth paragraph about your project and overview of use.
 ### Dependencies
 
 * Describe any prerequisites, libraries, OS version, etc., needed before installing program.
-* ex. Windows 10
+* Google Docs
+* 
 
 ### Installing
 
