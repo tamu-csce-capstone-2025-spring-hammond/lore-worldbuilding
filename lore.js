@@ -37,6 +37,11 @@ function installAddon() {
 }
 
 //Important information for firebase API to connect with the database
+function getFirestorePrivateKey() {
+  var scriptProperties = PropertiesService.getScriptProperties();
+  return scriptProperties.getProperty('FIREBASE_PRIVATE_KEY');
+}
+
 const PROJECT_ID = "howdy-ed4fe";
 const FIREBASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/`;
 
