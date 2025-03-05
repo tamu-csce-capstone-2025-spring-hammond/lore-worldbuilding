@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('LandingPageStyle'); ?>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to LORE Worldbuilder</h1>
+    
+    <a href="#" class="option" onclick="navigateTo('viewCatalogs')">View Catalogs</a>
+    <a href="#" class="option" onclick="navigateTo('viewTimeline')">View Timeline</a>
+  </div>
+
+  <script>
+    function navigateTo(page) {
+      google.script.run.showPage(page);
+    }
+  </script>
+</body>
+</html>

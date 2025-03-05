@@ -27,6 +27,39 @@ function showRegularSidebar() {
   DocumentApp.getUi().showSidebar(html);
 }
 
+function showLandingPage() {
+  var template = HtmlService.createTemplateFromFile('LandingPage');
+  var html = template.evaluate().setTitle('LORE Worldbuilder');
+  DocumentApp.getUi().showSidebar(html);
+}
+
+function showPage(page) {
+  try{
+    var htmlFile;
+    
+    if (page === "viewCatalogs") {
+      htmlFile = "Catalogs_Page"; // Create catalogs_page.html
+    } else if (page === "viewTimeline") {
+      htmlFile = "Timeline_Page"; // Create timeline_page.html
+    }
+
+
+    if (htmlFile) {
+      var html = HtmlService.createHtmlOutputFromFile(htmlFile)
+          .setTitle('LORE Worldbuilder');
+      DocumentApp.getUi().showSidebar(html);
+    }
+  }
+  catch(error){
+    Logger.log("Error in showPage(): " + error.message);
+    var errorMessage = HtmlService.createHtmlOutput(
+      `<p style="color: red;"> Error: ${error.message}</p>`
+    ).setTitle('Error');
+    DocumentApp.getUi().showSidebar(errorMessage);
+  }
+
+}
+
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename)
       .getContent();
