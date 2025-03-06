@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <?!= include('viewCatalogsStyles'); ?>
+
+    <script>
+      function loadCatalogs() {
+        google.script.run.withSuccessHandler(displayCatalogs).getCatalogs();
+      }
+
+      function displayCatalogs(catalogs) {
+        let list = document.getElementById("catalogList");
+
+        let backButton = document.getElementById("backToLanding");
+        if (!backButton) {
+          backButton = document.createElement("li");
+          backButton.id = "backToLanding";
+          backButton.textContent = "Go Back";
+          backButton.onclick = function () {
+            navigateTo('LandingPage');
+          };
+        }
+
+        list.innerHTML = ""; // Clear previous items
+
+        catalogs.forEach((catalog) => {
+          let li = document.createElement("li");
+          li.innerHTML = `<span onclick="toggleCatalog('${catalog}')">${catalog} ▼</span>`;
+          
+          let sublist = document.createElement("ul");
+          sublist.id = `data-${catalog}`;
+          sublist.style.display = "none"; // Initially hidden
+          
+          li.appendChild(sublist);
+          list.appendChild(li);
+        });
+        list.appendChild(backButton);
+      }
+
+      function displayCatalogData(catalog, response) {
+          console.log("Data received for catalog:", catalog, response);
+
+          let sublist = document.getElementById(`data-${catalog}`);
+          sublist.innerHTML = ""; // Clear old data
+
+          //Fix: Extract data from response object
+          let data = response.data; 
+
+          if (!Array.isArray(data) || data.length === 0) {
+              sublist.innerHTML = "<li>No data found</li>"; // Show message if empty
+              return;
+          }
+
+          data.forEach((item) => {
+              let li = document.createElement("li");
+              li.textContent = item;
+              sublist.appendChild(li);
+          });
+      }
+
+
+      function toggleCatalog(catalog) {
+          console.log("Clicked category:", catalog); // Debugging log
+
+          let sublist = document.getElementById(`data-${catalog}`);
+          
+          if (!sublist) {
+              console.log("Error: Sublist element not found for", catalog);
+              return;
+          }
+
+          if (sublist.style.display === "none") {
+              google.script.run.withSuccessHandler((data) => {
+                  console.log("Received data for", catalog, data); // Debugging log
+                  displayCatalogData(catalog, data);
+              }).getCatalogData(catalog);
+
+              sublist.style.display = "block"; // Expand
+          } else {
+              sublist.style.display = "none"; // Collapse
+          }
+      }
+
+      window.onload = loadCatalogs; 
+    </script>
+  </head>
+  <body>
+    <p>Choose a Catalog to Display:</p>
+    <ul id = "catalogList">
+
+      <li id="backToLanding" onclick="navigateTo('LandingPage')">Go Back</li>
+
+    </ul>
+    <script>
+    function navigateTo(page) {
+      google.script.run.showPage(page);
+    }
+    </script>
+  </body>
+</html>
