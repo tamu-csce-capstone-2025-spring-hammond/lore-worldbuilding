@@ -2,8 +2,21 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      function loadProperNouns() {
+        google.script.run.withSuccessHandler(displayProperNouns).getProperNounsForSidebar();
+      }
+
+      function displayProperNouns(nouns) {
+        var output = document.getElementById("properNounsList");
+        output.innerHTML = "<h3>Proper Nouns:</h3><ul>" + nouns.map(n => "<li>" + n + "</li>").join("") + "</ul>";
+      }
+
+      window.onload = loadProperNouns;
+    </script>
   </head>
   <body>
-    
+    <h2>LORE Worldbuilder</h2>
+    <div id="properNounsList">Loading proper nouns...</div>
   </body>
 </html>

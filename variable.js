@@ -6,6 +6,11 @@ function trackOpenCount() {
   Logger.log("Extension opened " + count + " times");
 }
 
+function getOpenCount() {
+  var props = PropertiesService.getDocumentProperties();
+  return parseInt(props.getProperty("open_count") || "0", 10);
+}
+
 function getDocText() {
   var doc = DocumentApp.getActiveDocument(); // Get the active document
   var text = doc.getBody().getText(); // Get all text from the document body
