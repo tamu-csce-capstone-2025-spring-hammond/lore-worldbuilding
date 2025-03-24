@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <?!= include('viewCatalogsStyles'); ?>
+
+    <script>
+
+      //display each catalog and add/go back option
+      function loadCatalogs() {
+        google.script.run.withSuccessHandler(displayCatalogs).getCatalogs();
+      }
+
+      function displayCatalogs(catalogs) {
+        let list = document.getElementById("catalogList");
+
+        let backButton = document.getElementById("backToLanding");
+        if (!backButton) {
+          backButton = document.createElement("li");
+          backButton.id = "backToLanding";
+          backButton.textContent = "Go Back";
+          backButton.onclick = function () {
+            navigateTo('LandingPage');
+          };
+        }
+
+        let addButton = document.getElementById("addEntity");
+        if (!addButton) {
+          addButton = document.createElement("li");
+          addButton.id = "addEntity";
+          addButton.textContent = "Add an Entity";
+          addButton.onclick = function () {
+            showAddEntity();
+          };
+        }
+        list.innerHTML = ""; // Clear previous items
+
+        catalogs.forEach((catalog) => {
+          let li = document.createElement("li");
+          li.innerHTML = `<span onclick="toggleCatalog('${catalog}')">${catalog} ▼</span>`;
+          
+          let sublist = document.createElement("ul");
+          sublist.id = `data-${catalog}`;
+          sublist.style.display = "none"; // Initially hidden
+          
+          li.appendChild(sublist);
+          list.appendChild(li);
+        });
+        list.appendChild(addButton);
+        list.appendChild(backButton);
+
+        window.catalogsList = catalogs;
+      }
+
+
+      //display each catalog's items
+      function displayCatalogData(catalog, response) {
+          console.log("Data received for catalog:", catalog, response);
+
+          let sublist = document.getElementById(`data-${catalog}`);
+          sublist.innerHTML = ""; // Clear old data
+
+          //Fix: Extract data from response object
+          let data = response.data; 
+
+          if (!Array.isArray(data) || data.length === 0) {
+              sublist.innerHTML = "<li>No data found</li>"; // Show message if empty
+              return;
+          }
+
+              data.forEach((item) => {
+                let li = document.createElement("li");
+                //li.style.textAlign = "center";
+                let span = document.createElement("span");
+                span.textContent = item;
+                span.style.display = "block";
+
+                // Create delete button
+                let deleteButton = document.createElement("button");
+                deleteButton.textContent = "❌";
+                deleteButton.style.marginTop = "25px"; // Spacing
+                deleteButton.style.display = "block";
+                deleteButton.onclick = function () {
+                  deleteEntity(catalog, item, li);
+                };
+
+                let updateButton = document.createElement("button");
+                updateButton.textContent = "Update Entity";
+                updateButton.style.marginTop = "25px"; // Spacing
+                updateButton.style.display = "block";
+                updateButton.onclick = function () {
+                  console.log("Updating entity:", catalog, item);  // ✅ Debugging log
+                  showUpdateEntity(catalog, item);
+                };
+
+                li.appendChild(span);
+                li.appendChild(deleteButton);
+                li.appendChild(updateButton);
+                sublist.appendChild(li);
+              });
+      }
+
+
+      //Delete Entities
+      function deleteEntity(catalog, entity, listItem) {
+        let confirmDelete = confirm(`Are you sure you want to delete "${entity}" from ${catalog}?`);
+        if (!confirmDelete) return;
+
+        google.script.run.withSuccessHandler(() => {
+          listItem.remove(); // Remove from UI
+        }).deleteCatalogEntity(catalog, entity);
+      }
+
+
+      //Adding Entities
+      function showAddEntity() {
+        let modal = document.getElementById("addEntityModal");
+        let select = document.getElementById("catalogDropdown");
+
+        // Clear existing dropdown options
+        select.innerHTML = "";
+
+        // Add each catalog as an option
+        window.catalogsList.forEach(catalog => {
+          let option = document.createElement("option");
+          option.value = catalog;
+          option.textContent = catalog;
+          select.appendChild(option);
+        });
+
+        modal.style.display = "block"; // Show modal
+      }
+
+      function closeModal() {
+        document.getElementById("addEntityModal").style.display = "none";
+      }
+
+      function submitNewEntity() {
+        let catalog = document.getElementById("catalogDropdown").value;
+        let entityName = document.getElementById("entityName").value.trim();
+
+        if (!entityName) {
+          alert("Please enter a valid entity name.");
+          return;
+        }
+
+        google.script.run.withSuccessHandler(() => {
+          alert(`Entity "${entityName}" added to ${catalog}`);
+          closeModal();
+          loadCatalogs(); // Refresh list
+        }).addCatalogEntity(catalog, entityName);
+      }
+
+
+      function showUpdateEntity(catalog, entity) {
+        let modal = document.getElementById("showEntityModal");
+
+        if (!modal) {
+          console.log("Error: Modal element not found!");
+          return;
+        }
+
+        let select = document.getElementById("fieldDropdown");
+        select.innerHTML = ""; // Clear previous options
+
+        select.setAttribute("data-catalog", catalog);
+        select.setAttribute("data-entity", documentID);
+
+        // Call Firestore to get document fields
+        google.script.run.withSuccessHandler((fields) => {
+          if (!fields || Object.keys(fields).length === 0) {
+            select.innerHTML = "<option>No fields found</option>";
+            return;
+          }
+
+          // Populate dropdown with field names
+          Object.keys(fields).forEach(fieldName => {
+            let option = document.createElement("option");
+            option.value = fieldName;
+            option.textContent = fieldName;
+            select.appendChild(option);
+          });
+
+          modal.style.display = "block"; 
+        }).getDocumentFields(catalog, documentID);
+      }
+
+      function closeUpdateModal() {
+        document.getElementById("showEntityModal").style.display = "none";
+      }
+
+      function updateEntity() {
+        let catalog = document.getElementById("fieldDropdown").getAttribute("data-catalog");
+        let entity = document.getElementById("fieldDropdown").getAttribute("data-entity");
+        let field = document.getElementById("fieldDropdown").value;
+        let newValue = document.getElementById("fieldName").value.trim();
+        console.log("Catalog:", catalog);
+        console.log("Entity:", entity);
+        console.log("Field:", field);
+        console.log("New Value:", newValue);
+
+        if (!catalog || !entity || !field || !newValue) {
+          alert("Please select a field and enter a new value.");
+          return;
+        }
+
+        let updateData = {};
+        updateData[field] = { stringValue: newValue };  // Firestore format
+
+        console.log(`Updating ${field} in ${entity} (Catalog: ${catalog}) to: ${newValue}`);
+
+        google.script.run.withSuccessHandler(() => {
+          alert(`"${field}" updated successfully!`);
+          closeUpdateModal();
+          loadCatalogs(); // Refresh list
+        }).updateCatalogEntity(catalog, entity, updateData);
+      }
+
+
+
+
+      //Get data
+      function toggleCatalog(catalog) {
+          console.log("Clicked category:", catalog); // Debugging log
+
+          let sublist = document.getElementById(`data-${catalog}`);
+          
+          if (!sublist) {
+              console.log("Error: Sublist element not found for", catalog);
+              return;
+          }
+
+          if (sublist.style.display === "none") {
+              google.script.run.withSuccessHandler((data) => {
+                  console.log("Received data for", catalog, data); // Debugging log
+                  displayCatalogData(catalog, data);
+              }).getCatalogData(catalog);
+
+              sublist.style.display = "block"; // Expand
+          } else {
+              sublist.style.display = "none"; // Collapse
+          }
+      }
+
+
+
+      window.onload = loadCatalogs; 
+    </script>
+  </head>
+  <body>
+    <p>Choose a Catalog to Display:</p>
+    <ul id = "catalogList">
+      <li id="addEntity" onclick="showAddEntity()">Add an Entity</li>
+      <li id="backToLanding" onclick="navigateTo('LandingPage')">Go Back</li>
+    </ul>
+
+    <div id="addEntityModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>Add a New Entity</h2>
+
+        <label for="catalogDropdown">Select Catalog:</label>
+        <select id="catalogDropdown"></select>
+
+        <br><br>
+
+        <label for="entityName">Enter Entity Name:</label>
+        <input type="text" id="entityName" placeholder="Entity name">
+
+        <br><br>
+
+        <button onclick="submitNewEntity()">Add Entity</button>
+        <button onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="showEntityModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeUpdateModal()">&times;</span>
+        <h2>Add a New Entity</h2>
+
+        <label for="fieldDropdown">Select Catalog:</label>
+        <select id="fieldDropdown"></select>
+
+        <br><br>
+
+        <label for="fieldName">Enter New Field Value:</label>
+        <input type="text" id="fieldName" placeholder="field name">
+
+        <br><br>
+
+        <button onclick="updateEntity()">Update Entity</button>
+        <button onclick="closeUpdateModal()">Cancel</button>
+      </div>
+    </div>
+
+    <script>
+    function navigateTo(page) {
+      google.script.run.showPage(page);
+    }
+    </script>
+  </body>
+</html>
