@@ -2,16 +2,17 @@
 <html>
 <head>
   <base target="_top">
-  <?!= include('LandingPageStyle'); ?>
+  <?!= include('DefaultStyles'); ?>
 </head>
 <body>
   <div class="container">
     <h1>Welcome to LORE Worldbuilder</h1>
+    <!-- add intro message here if track open count is less than a number (i.e. 10) -->
     
     <a href="#" class="option" onclick="navigateTo('viewCatalogs')">View Catalogs</a>
-
     <a href="#" class="option" onclick="navigateTo('Proper')">View Proper Nouns</a>
-
+    <a href="#" class="option" onclick="navigateTo('viewTimeline')">Event Timeline</a>
+    <a href="#" class="option" onclick="navigateTo('viewSettings')">Settings</a>
   </div>
 
   <script>
