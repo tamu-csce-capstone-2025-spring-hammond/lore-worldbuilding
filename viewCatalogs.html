@@ -6,6 +6,7 @@
     <?!= include('viewCatalogsStyles'); ?>
 
     <script>
+
       //display each catalog and add/go back option
       function loadCatalogs() {
         google.script.run.withSuccessHandler(displayCatalogs).getCatalogs();
@@ -24,7 +25,6 @@
           };
         }
 
-
         let addButton = document.getElementById("addEntity");
         if (!addButton) {
           addButton = document.createElement("li");
@@ -34,7 +34,6 @@
             showAddEntity();
           };
         }
-
         list.innerHTML = ""; // Clear previous items
 
         catalogs.forEach((catalog) => {
@@ -69,12 +68,17 @@
               sublist.innerHTML = "<li>No data found</li>"; // Show message if empty
               return;
           }
+
               data.forEach((item) => {
                 let li = document.createElement("li");
                 //li.style.textAlign = "center";
                 let span = document.createElement("span");
                 span.textContent = item;
                 span.style.display = "block";
+                span.style.cursor = "pointer";
+                span.onclick = function () {
+                  showEntityDetails(catalog, item);
+                };
 
                 // Create delete button
                 let deleteButton = document.createElement("button");
@@ -165,7 +169,7 @@
         select.innerHTML = ""; // Clear previous options
 
         select.setAttribute("data-catalog", catalog);
-        select.setAttribute("data-entity", documentID);
+        select.setAttribute("data-entity", entity);
 
         // Call Firestore to get document fields
         google.script.run.withSuccessHandler((fields) => {
@@ -183,7 +187,7 @@
           });
 
           modal.style.display = "block"; 
-        }).getDocumentFields(catalog, documentID);
+        }).getDocumentFields(catalog, entity);
       }
 
       function closeUpdateModal() {
@@ -242,7 +246,62 @@
               sublist.style.display = "none"; // Collapse
           }
       }
-      
+
+    function closeViewModal() {
+      document.getElementById("viewEntityModal").style.display = "none";
+    }
+
+    function showEntityDetails(catalog, entityName) {
+      google.script.run.withSuccessHandler((entityData) => {
+        const modal = document.getElementById("viewEntityModal");
+        const nameDisplay = document.getElementById("viewEntityName");
+        const list = document.getElementById("entityDetailsList");
+
+        nameDisplay.textContent = `Catalog: ${catalog} — ${entityName}`;
+        list.innerHTML = ""; // Clear previous
+
+        if (!entityData || Object.keys(entityData).length === 0) {
+          list.innerHTML = "<li>No data available</li>";
+        } else {
+          Object.keys(entityData).forEach((key) => {
+            const li = document.createElement("li");
+            let value = entityData[key];
+
+            // Format arrays
+            if (Array.isArray(value)) {
+              value = value.join(", ");
+            }
+
+            li.innerHTML = `<strong>${key}:</strong> ${value}`;
+            list.appendChild(li);
+          });
+        }
+
+        modal.style.display = "block";
+      }).getCatalogEntity(catalog, entityName); 
+    }
+
+    function extractFirestoreValue(field) {
+      if (field.stringValue !== undefined) return field.stringValue;
+      if (field.integerValue !== undefined) return parseInt(field.integerValue);
+      if (field.doubleValue !== undefined) return parseFloat(field.doubleValue);
+      if (field.booleanValue !== undefined) return field.booleanValue;
+      if (field.arrayValue !== undefined) {
+        return (field.arrayValue.values || []).map(extractFirestoreValue);
+      }
+      if (field.mapValue !== undefined) {
+        var result = {};
+        for (var key in field.mapValue.fields) {
+          result[key] = extractFirestoreValue(field.mapValue.fields[key]);
+        }
+        return result;
+      }
+      if (field.nullValue !== undefined) return null;
+      return null;
+    }
+
+
+
       window.onload = loadCatalogs; 
     </script>
   </head>
@@ -290,6 +349,16 @@
 
         <button onclick="updateEntity()">Update Entity</button>
         <button onclick="closeUpdateModal()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="viewEntityModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeViewModal()">&times;</span>
+        <h2>Entity Details</h2>
+        <p id="viewEntityName" style="font-weight: bold;"></p>
+        <ul id="entityDetailsList"></ul>
+        <button onclick="closeViewModal()">Close</button>
       </div>
     </div>
 
