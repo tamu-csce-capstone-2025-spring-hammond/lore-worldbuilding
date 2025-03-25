@@ -6,7 +6,6 @@
     <?!= include('viewCatalogsStyles'); ?>
 
     <script>
-
       //display each catalog and add/go back option
       function loadCatalogs() {
         google.script.run.withSuccessHandler(displayCatalogs).getCatalogs();
@@ -25,6 +24,7 @@
           };
         }
 
+
         let addButton = document.getElementById("addEntity");
         if (!addButton) {
           addButton = document.createElement("li");
@@ -34,6 +34,7 @@
             showAddEntity();
           };
         }
+
         list.innerHTML = ""; // Clear previous items
 
         catalogs.forEach((catalog) => {
@@ -68,7 +69,6 @@
               sublist.innerHTML = "<li>No data found</li>"; // Show message if empty
               return;
           }
-
               data.forEach((item) => {
                 let li = document.createElement("li");
                 //li.style.textAlign = "center";
@@ -242,9 +242,7 @@
               sublist.style.display = "none"; // Collapse
           }
       }
-
-
-
+      
       window.onload = loadCatalogs; 
     </script>
   </head>
