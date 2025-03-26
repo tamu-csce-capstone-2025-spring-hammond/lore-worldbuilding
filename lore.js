@@ -22,12 +22,6 @@ function showSidebar() {
   DocumentApp.getUi().showSidebar(html);
 }
 
-function showRegularSidebar() {
-  var html = HtmlService.createHtmlOutputFromFile('sidebar')
-      .setTitle('LORE Worldbuilder');
-  DocumentApp.getUi().showSidebar(html);
-}
-
 function showLandingPage() {
   var template = HtmlService.createTemplateFromFile('LandingPage');
   var html = template.evaluate().setTitle('LORE Worldbuilder');
@@ -77,225 +71,6 @@ function include(filename) {
 function installAddon() {
   onOpen();
 }
-
-
-// Important information for firebase API to connect with the database START //
-function getFirestorePrivateKey() {
-  var scriptProperties = PropertiesService.getScriptProperties();
-  return scriptProperties.getProperty('FIREBASE_PRIVATE_KEY');
-}
-
-const PROJECT_ID = "howdy-ed4fe";
-const FIREBASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/`;
-
-const SERVICE_ACCOUNT_EMAIL = "firebase-adminsdk-fbsvc@howdy-ed4fe.iam.gserviceaccount.com";
-const PRIVATE_KEY = getFirestorePrivateKey().replace(/\\n/g, '\n');
-
-//Get authentication token using Google Apps Script's OAuth service
-function getAccessToken() {
-  var jwt = {
-    alg: "RS256",
-    typ: "JWT"
-  };
-
-  var claimSet = {
-    iss: SERVICE_ACCOUNT_EMAIL,
-    scope: "https://www.googleapis.com/auth/datastore",
-    aud: "https://oauth2.googleapis.com/token",
-    exp: Math.floor(Date.now() / 1000) + 3600,
-    iat: Math.floor(Date.now() / 1000)
-  };
-
-  var header = Utilities.base64EncodeWebSafe(JSON.stringify(jwt));
-  var claim = Utilities.base64EncodeWebSafe(JSON.stringify(claimSet));
-  var signature = Utilities.computeRsaSha256Signature(header + "." + claim, PRIVATE_KEY);
-  var signedJwt = header + "." + claim + "." + Utilities.base64EncodeWebSafe(signature);
-
-  var options = {
-    method: "post",
-    payload: {
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: signedJwt
-    }
-  };
-
-  var response = UrlFetchApp.fetch("https://oauth2.googleapis.com/token", options);
-  var json = JSON.parse(response.getContentText());
-  return json.access_token;
-}
-
-// Important information for firebase API to connect with the database END //
-
-
-//Read Data from Firestore
-
-//Read Firestore Data based on collection name ("Characters", "Events", "Locations") FOR NOW
-function getFirestoreData(collection) {
-  var url = FIREBASE_URL + collection;
-  
-  var options = {
-    method: "get",
-    headers: {
-      Authorization: "Bearer " + getAccessToken()
-    }
-  };
-
-  var response = UrlFetchApp.fetch(url, options);
-  var jsonData = JSON.parse(response.getContentText());
-
-  if (!jsonData.documents) {
-    return []; // Return empty array if no documents found
-  }
-
-  // Extract relevant fields from Firestore response
-  var result = jsonData.documents.map(doc => {
-    var fields = doc.fields;
-    return fields.Name.stringValue; // Adjust this based on Firestore structure
-  });
-
-  Logger.log(result);
-  return result;
-}
-
-//Will change have to figure out how to get catalogs from Firestore
-function getCatalogs() {
-  return ["Characters", "Events", "Locations"];
-}
-
-function getCatalogData(catalog) {
-  //Debugging: Store logs to return to JavaScript
-  var logs = []; 
-
-  logs.push("getCatalogData() called with catalog: " + catalog);
-
-  if (!catalog) {
-      logs.push("Error: catalog is undefined!");
-      return logs;
-  }
-
-  logs.push("Fetching from Firestore Collection: " + catalog);
-
-  var data = getFirestoreData(catalog);
-  logs.push("Firestore returned: " + JSON.stringify(data));
-
-  //Debugging: Return logs and data to JavaScript
-  return { logs: logs, data: data }; 
-}
-
-
-function deleteCatalogEntity(catalog, entity){
-  //catalog = "Characters";
-  //entity - "Test"
-  var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entity);
-  //var url = FIREBASE_URL + catalog + entity;
-  //var url = FIREBASE_URL + "/" + encodeURIComponent(entity);
-
-  var options = {
-    method: "delete",
-    headers: {
-      Authorization: "Bearer " + getAccessToken(),
-      "Content-Type": "application/json"
-    }    
-  };
-
-  var response = UrlFetchApp.fetch(url, options);
-  var statusCode = response.getResponseCode();
-  var responseBody = response.getContentText();
-
-  Logger.log("DELETE Request URL: " + url);
-  Logger.log("Response Code: " + statusCode);
-  Logger.log("Response Body: " + responseBody);
-
-  if (statusCode == 200 || statusCode == 204) {
-    return { success: true, message: "Entity deleted successfully." };
-  } else {
-    return { success: false, message: "Failed to delete entity. Status: " + statusCode + " Response: " + responseBody };
-  }
-}
-
-
-function addCatalogEntity(catalog, entityName) {
-  var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
-
-  var payload = {
-    fields: {
-      Name: { stringValue: entityName } 
-    }
-  };
-
-  var options = {
-    method: "patch",
-    headers: {
-      Authorization: "Bearer " + getAccessToken(),
-      "Content-Type": "application/json"
-    },
-    payload: JSON.stringify(payload)
-  };
-
-  var response = UrlFetchApp.fetch(url, options);
-  var statusCode = response.getResponseCode();
-  return statusCode === 200 || statusCode === 201;
-}
-
-
-//Update Function
-function updateCatalogEntity(collection, documentId, updateData) {
-  var url = FIREBASE_URL + collection + "/" + encodeURIComponent(documentId);
-
-  var payload = {
-    fields: updateData  // Firestore expects fields in this format
-  };
-
-  var options = {
-    method: "PATCH",  // Use PATCH to update only specific fields
-    headers: {
-      Authorization: "Bearer " + getAccessToken(),
-      "Content-Type": "application/json"
-    },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  };
-
-  var response = UrlFetchApp.fetch(url, options);
-  var statusCode = response.getResponseCode();
-  var responseBody = response.getContentText();
-
-  Logger.log("PATCH Request URL: " + url);
-  Logger.log("Response Code: " + statusCode);
-  Logger.log("Response Body: " + responseBody);
-
-  return statusCode === 200 || statusCode === 201;
-}
-
-
-//get document fields
-function getDocumentFields(collection, documentId) {
-  //collection = "Characters";
-  //documentId = "Test";
-  var url = FIREBASE_URL + collection + "/" + encodeURIComponent(documentId);
-
-  var options = {
-    method: "get",
-    headers: {
-      Authorization: "Bearer " + getAccessToken(),
-      "Content-Type": "application/json"
-    },
-    muteHttpExceptions: true
-  };
-
-  var response = UrlFetchApp.fetch(url, options);
-  var statusCode = response.getResponseCode();
-  var responseBody = response.getContentText();
-
-  if (statusCode === 200) {
-    var data = JSON.parse(responseBody);
-    Logger.log(data)
-    return data.fields; // ✅ Return document fields
-  } else {
-    return { error: "Failed to get document. Status: " + statusCode, response: responseBody };
-  }
-}
-
 
 function findProperNouns() {
   var doc = DocumentApp.getActiveDocument();
@@ -394,6 +169,11 @@ function findProperNouns2() {
   return uniqueProperNouns.size ? [...uniqueProperNouns] : ["No proper nouns found."];
 }
 
+// TODO: user prompt function
+// check if noun already exists in DB (character name or as an alias)
+// check that it's not already in the 'ignore' list
+// if not prompt user for noun type 'character' 'location' etc. or 'ignore'
+// if user chooses an object type, send to DB
 
 // Function to pass data to the sidebar
 function getProperNounsForSidebar() {
