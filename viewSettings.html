@@ -3,10 +3,27 @@
   <head>
     <base target="_top">
     <?!= include('DefaultStyles'); ?>
+    <?!= include('viewSettingsStyles'); ?>
   </head>
   <body>
     <div id="sidebar" class="container">
-      <a href="#" class="option" onclick="navigateTo('LandingPage')">Back</a>
+      <div class="container" style="font-size: 18px; color: #333;">
+        <h1>Accent Color:</h1>
+
+        <!-- Button 1: green -->
+        <button class="accent-btn" style="background-color: #64b579" onclick="changeAccentColor('#64b579')"> </button>
+
+        <!-- Button 2 blue -->
+        <button class="accent-btn" style="background-color: #5858b8" onclick="changeAccentColor('#5858b8')"> </button>
+
+        <!-- Button 3 red --> 
+        <button class="accent-btn" style="background-color: #e74c3c" onclick="changeAccentColor('#e74c3c')"> </button>
+
+        <!-- Button 4 yellow-->
+        <button class="accent-btn" style="background-color: #f39c12" onclick="changeAccentColor('#f39c12')"> </button>
+
+        <a href="#" class="option" onclick="navigateTo('LandingPage')">Back</a>
+      </div>
     </div>
 
     <script>
