@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <?!= include('viewCatalogsStyles'); ?>
+    <?!= include('DefaultStyles'); ?>
 
     <script>
 
@@ -80,28 +81,7 @@
                   showEntityDetails(catalog, item);
                 };
 
-
-                // Create delete button
-                /*let deleteButton = document.createElement("button");
-                deleteButton.textContent = "❌";
-                deleteButton.style.marginTop = "25px"; // Spacing
-                deleteButton.style.display = "block";
-                deleteButton.onclick = function () {
-                  deleteEntity(catalog, item, li);
-                };
-
-                let updateButton = document.createElement("button");
-                updateButton.textContent = "Update Entity";
-                updateButton.style.marginTop = "25px"; // Spacing
-                updateButton.style.display = "block";
-                updateButton.onclick = function () {
-                  console.log("Updating entity:", catalog, item);
-                  showUpdateEntity(catalog, item);
-                };*/
-
                 li.appendChild(span);
-                //li.appendChild(deleteButton);
-                //li.appendChild(updateButton);
                 sublist.appendChild(li);
               });
       }
@@ -156,7 +136,6 @@
           loadCatalogs(); // Refresh list
         }).addCatalogEntity(catalog, entityName);
       }
-
 
       function showUpdateEntity(catalog, entity) {
         let modal = document.getElementById("showEntityModal");
@@ -222,10 +201,6 @@
         }).updateCatalogEntity(catalog, entity, updateData);
       }
 
-
-
-
-
       //Get data
       function toggleCatalog(catalog) {
           console.log("Clicked category:", catalog); // Debugging log
@@ -275,7 +250,11 @@
               value = value.join(", ");
             }
 
-            li.innerHTML = `<strong>${key}:</strong> ${value}`;
+          const formattedKey = key
+            .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space
+            .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
+
+            li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
             list.appendChild(li);
           });
         }
@@ -340,8 +319,7 @@
         <span class="close" onclick="closeViewModal()">&times;</span>
         <h2>Entity Details</h2>
         <p id="viewEntityName" style="font-weight: bold;"></p>
-        <ul id="entityDetailsList"></ul>
-        <button onclick="closeViewModal()">Close</button>
+        <ul style="list-style: none;" id="entityDetailsList"></ul>
       </div>
     </div>
 
