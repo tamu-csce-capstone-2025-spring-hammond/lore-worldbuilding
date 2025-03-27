@@ -2,8 +2,17 @@
 <html>
   <head>
     <base target="_top">
+    <?!= include('DefaultStyles'); ?>
   </head>
   <body>
-    
+    <div id="sidebar" class="container">
+      <a href="#" class="option" onclick="navigateTo('LandingPage')">Back</a>
+    </div>
+
+    <script>
+      function navigateTo(page) {
+        google.script.run.showPage(page);
+      }
+    </script>
   </body>
 </html>

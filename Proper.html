@@ -16,15 +16,17 @@
     </script>
   </head>
   <body>
+    <div id="sidebar" class="container">
+      <a href="#" class="option" onclick="navigateTo('LandingPage')">Back</a>
+    </div>
+    
     <h2>LORE Worldbuilder</h2>
     <div id="properNounsList">Loading proper nouns...</div>
-    <ul>
-      <li id="backToLanding" onclick="navigateTo('LandingPage')">Go Back</li>
-    </ul>
+
     <script>
-    function navigateTo(page) {
-      google.script.run.showPage(page);
-    }
-  </script>
+      function navigateTo(page) {
+        google.script.run.showPage(page);
+      }
+    </script>
   </body>
 </html>
