@@ -1,20 +1,26 @@
 <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f4f4f4;
-      margin: 20px;
-      padding: 0;
-    }
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
+
+  body {
+    font-family: 'DM Serif Display', serif;
+    text-align: center;
+    background-color: #f4f4f4;
+    margin: 0; // Jordyn: Was there a reason the margin was 20px? It was creating unecessary scroll wheels on the sides.
+    padding: 0;
+  }
+
   h1 {
     font-size: 22px;
     font-weight: bold;
+    font-family: 'DM Serif Display', serif;
     color: #333;
   }
+
   p {
     font-size: 14px;
     color: #555;
   }
+
   .continue-btn {
     margin-top: 20px;
     background-color: #4285F4;
@@ -25,6 +31,7 @@
     cursor: pointer;
     border-radius: 5px;
   }
+  
   .continue-btn:hover {
     background-color: #357AE8;
   }
@@ -55,5 +62,48 @@
   .option:hover {
     background-color: #2980b9;
   }
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+
+  .modal-content {
+    background-color: white;
+    margin: 4% auto;
+    padding: 10px;
+    border: 1px solid #888;
+    width: 92%;
+    text-align: center;
+    max-width: 400px;
+  }
+
+  .close {
+    color: red;
+    float: right;
+    font-size: 28px;
+    cursor: pointer;
+  }
+
+  .close:hover {
+    color: darkred;
+  }
+
+  select, input, button {
+    margin-top: 10px;
+    padding: 5px;
+    font-size: 16px;
+    width: 100%; /* Make inputs fit inside modal */
+    max-width: 350px; /* Prevents them from overflowing */
+    box-sizing: border-box; /* Prevents width issues */
+  }
+  
+
 </style>
 

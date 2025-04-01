@@ -5,7 +5,7 @@ function onOpen() {
   if (doc) {
     DocumentApp.getUi()
       .createAddonMenu()
-      .addItem("Open Sidebar", "showSidebar")
+      .addItem("Open Sidebar", "showLandingPage")
       .addToUi();
       Logger.log(doc.getName())
   }
@@ -16,15 +16,10 @@ function onOpen() {
 }
 
 // Navigate pages START //
-function showSidebar() {
-  var template = HtmlService.createTemplateFromFile('intro_sidebar');
-  var html = template.evaluate().setTitle('LORE Worldbuilder');
-  DocumentApp.getUi().showSidebar(html);
-}
 
 function showLandingPage() {
   var template = HtmlService.createTemplateFromFile('LandingPage');
-  var html = template.evaluate().setTitle('LORE Worldbuilder');
+  var html = template.evaluate().setTitle('LORE Worldbuilder').setWidth(500);
   DocumentApp.getUi().showSidebar(html);
 }
 
@@ -36,7 +31,9 @@ function showPage(page) {
     if (page === "viewCatalogs") {
       htmlFile = "viewCatalogs"; // This should match viewCatalogs.html
     } else if (page === "viewTimeline") {
-      htmlFile = "Timeline_Page"; // This should match Timeline_Page.html
+      htmlFile = "viewTimeline"; // This should match viewTimeline.html
+    } else if(page == "viewSettings") {
+      htmlFile = "viewSettings"
     } else if(page == "LandingPage") {
       htmlFile = "LandingPage";
     } else if(page == "Proper"){
@@ -47,7 +44,7 @@ function showPage(page) {
 
     // Create the template
     var template = HtmlService.createTemplateFromFile(htmlFile);
-    var html = template.evaluate().setTitle('LORE Worldbuilder');
+    var html = template.evaluate().setTitle('LORE Worldbuilder').setWidth(500);
     DocumentApp.getUi().showSidebar(html);
 
   } catch (error) {
@@ -73,52 +70,6 @@ function installAddon() {
 }
 
 function findProperNouns() {
-  var doc = DocumentApp.getActiveDocument();
-  var text = doc.getBody().getText();
-
-  // Regular expression to match proper nouns while allowing multi-word names
-  var properNounRegex = /\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b/g;
-
-  // Regular expression to match titled words
-  var properNounRegexTitled = /\b(?:Mr|Ms|Mrs|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b|\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b/g;
-  
-  // Regular expression to exclude capitalized words at the start of sentences/dialogue
-  var sentenceStartRegex = /(?:[.!?]"?\s+|\n|^)([A-Z][a-z]+)/g;
-
-  // Match proper nouns in the text
-  var matches = text.match(properNounRegex) || [];
-
-  // Find first words of sentences and dialogues
-  var firstWords = [];
-  var match;
-  while ((match = sentenceStartRegex.exec(text)) !== null) {
-    firstWords.push(match[1]); // Collect sentence-initial words
-  }
-
-  // List of words to exclude (honorifics, common words)
-  var excludeWords = new Set([
-    "I", "The", 
-    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
-    "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
-  ]);
-
-  // Find valid proper nouns: filter out sentence-start words, common words, and allow title-based names
-  var properNouns = matches.filter(word =>
-    !firstWords.includes(word) && !excludeWords.has(word)
-  );
-
-  // Remove duplicates
-  properNouns = [...new Set(properNouns)];
-
-  return properNouns.length ? properNouns : ["No proper nouns found."];
-
-  // /(?<![.!?]"?\s)(?<!^)\b(?:Mr|Ms|Mrs|Dr|Prof)\.?\s*[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b/g
-
-}
-
-
-
-function findProperNouns2() {
   var doc = DocumentApp.getActiveDocument();
   var text = doc.getBody().getText();
 
@@ -177,6 +128,6 @@ function findProperNouns2() {
 
 // Function to pass data to the sidebar
 function getProperNounsForSidebar() {
-  var properNouns = findProperNouns2();
+  var properNouns = findProperNouns();
   return properNouns;
 }

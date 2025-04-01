@@ -3,6 +3,20 @@
 <head>
   <base target="_top">
   <?!= include('DefaultStyles'); ?>
+
+  <style>
+    .page {
+        overflow: auto;
+    }
+    .sidebar-container {
+      overflow: hidden;
+    }
+  </style>
+
+  <style>
+    @font-face { font-family: MorrisRoman; src: url('https://www.googleapis.com/drive/v3/files/18yk4fMTdFwYd9O907pLqIQrXVcsAMiG0?alt=media&key='); } 
+    h1 { font-family: MorrisRoman }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -19,6 +33,20 @@
     function navigateTo(page) {
       google.script.run.showPage(page);
     }
+
+    function adjustPageHeight() {
+      let sidebar = document.getElementById('container');
+      let pages = document.querySelectorAll('.option');
+
+      let sidebarHeight = sidebar.clientHeight;
+
+      pages.forEach(page => {
+          page.style.height = `${sidebarHeight}px`;
+      });
+    }
+
+    window.addEventListener('load', adjustPageHeight);
+    window.addEventListener('resize', adjustPageHeight);
   </script>
 </body>
 </html>
