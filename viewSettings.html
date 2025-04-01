@@ -2,14 +2,13 @@
 <html>
   <head>
     <base target="_top">
-    <?!= include('DefaultStyles'); ?>
+    <?!= include('defaultStyles'); ?>
     <?!= include('viewSettingsStyles'); ?>
   </head>
   <body>
     <div id="sidebar" class="container">
-      <div class="container" style="font-size: 18px; color: #333;">
-        <h1>Accent Color:</h1>
-
+      <h1>Accent Color:</h1>
+      <div class="button-container">
         <!-- Button 1: green -->
         <button class="accent-btn" style="background-color: #64b579" onclick="changeAccentColor('#64b579')"> </button>
 
@@ -21,9 +20,12 @@
 
         <!-- Button 4 yellow-->
         <button class="accent-btn" style="background-color: #f39c12" onclick="changeAccentColor('#f39c12')"> </button>
-
-        <a href="#" class="option" onclick="navigateTo('LandingPage')">Back</a>
       </div>
+      <h1> Sort Entities By: </h1>
+      <h1> Add New Entity Type: </h1>
+      <h1> Font Size: </h1>
+      <h1> Accessibility: </h1>
+      <a href="#" class="option" onclick="navigateTo('landingPage')">Back</a>
     </div>
 
     <script>

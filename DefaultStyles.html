@@ -1,29 +1,91 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Macondo+Swash+Caps&family=Nanum+Gothic&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap');
+
+  // FONTS
+  html {
+    font-size: 18px;
+  }
+
+  // default font
+  .nanum-gothic-regular {
+    font-family: "Nanum Gothic", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  // only used for 'LORE' on landing page
+  .macondo-regular {
+    font-family: "Macondo", cursive;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  .page {
+    overflow: auto;
+  }
+
+  .sidebar-container {
+    overflow: hidden;
+  }
+
+  .nanum-gothic-regular {
+    font-family: "Nanum Gothic", sans-serif;
+    font-style: normal;
+  }
+  .macondo-swash-caps-regular {
+    font-family: "Macondo Swash Caps", cursive;
+    font-style: normal;
+  }
+
+  #top-text-block {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 35px;
+  }
+  #bottom-text-block {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 30px;
+  }
 
   body {
     font-family: 'DM Serif Display', serif;
     text-align: center;
-    background-color: #f4f4f4;
-    margin: 0; // Jordyn: Was there a reason the margin was 20px? It was creating unecessary scroll wheels on the sides.
+    background-color: #ffffff;
+    margin: 0;
     padding: 0;
+  }
+
+  h0 {
+    font-family: "Macondo Swash Caps";
+    text-align: center;
+    color: #3c4a3e;
+    font-size: 96px;
+    margin: 0;
   }
 
   h1 {
     font-size: 22px;
     font-weight: bold;
-    font-family: 'DM Serif Display', serif;
-    color: #333;
+    font-family: "Nanum Gothic";
+    color: #3c4a3e;
   }
 
   p {
+    font-family: "Nanum Gothic";
     font-size: 14px;
-    color: #555;
+    color: #3c4a3e;
   }
+
+
 
   .continue-btn {
     margin-top: 20px;
-    background-color: #4285F4;
+    background-color: #95b1ee;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -33,7 +95,7 @@
   }
   
   .continue-btn:hover {
-    background-color: #357AE8;
+    background-color: #95b1ee;
   }
 
   .container {
@@ -47,7 +109,7 @@
   .option {
     width: 60%;
     max-width: 300px;
-    background-color: #3498db;
+    background-color: #9fafa1;
     color: white;
     padding: 15px;
     margin: 10px;
@@ -56,13 +118,15 @@
     border-radius: 8px;
     transition: background-color 0.3s ease;
     text-decoration: none;
+    font-family: "Nanum Gothic";
     display: block;
   }
 
   .option:hover {
-    background-color: #2980b9;
+    background-color: #839b91;
   }
 
+  // handles how pop ups (modals) are displayed
   .modal {
     display: none;
     position: fixed;
@@ -104,6 +168,5 @@
     box-sizing: border-box; /* Prevents width issues */
   }
   
-
 </style>
 

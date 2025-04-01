@@ -18,7 +18,17 @@
     text-align: center;
     border-bottom: 3px solid #3498db; /* Border color */
     z-index: 1000;
-    display: flex; justify-content: center;
+    display: flex; 
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Button container to align buttons horizontally */
+  .button-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px; /* Space between buttons and "Back" link */
   }
 
   /* Accent color label styling */
@@ -38,5 +48,4 @@
     border-radius: 5px; /* Optional rounded corners for aesthetic */
     display: inline-block;
   }
-
-</style>
+  </style>

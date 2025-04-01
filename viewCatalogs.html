@@ -4,11 +4,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <?!= include('viewCatalogsStyles'); ?>
-    <?!= include('DefaultStyles'); ?>
+    <?!= include('defaultStyles'); ?>
 
     <script>
 
-      //display each catalog and add/go back option
+      // Display each catalog
       function loadCatalogs() {
         google.script.run.withSuccessHandler(displayCatalogs).getCatalogs();
       }
@@ -22,7 +22,7 @@
           backButton.id = "backToLanding";
           backButton.textContent = "Go Back";
           backButton.onclick = function () {
-            navigateTo('LandingPage');
+            navigateTo('landingPage');
           };
         }
 
@@ -35,7 +35,9 @@
             showAddEntity();
           };
         }
-        list.innerHTML = ""; // Clear previous items
+
+        // Clear previous items
+        list.innerHTML = ""; 
 
         catalogs.forEach((catalog) => {
           let li = document.createElement("li");
@@ -54,38 +56,35 @@
         window.catalogsList = catalogs;
       }
 
-
-      //display each catalog's items
+      // Display each catalog's items
       function displayCatalogData(catalog, response) {
-          console.log("Data received for catalog:", catalog, response);
+        console.log("Data received for catalog:", catalog, response);
 
-          let sublist = document.getElementById(`data-${catalog}`);
-          sublist.innerHTML = ""; // Clear old data
+        let sublist = document.getElementById(`data-${catalog}`);
+        sublist.innerHTML = ""; // Clear old data
 
-          //Fix: Extract data from response object
-          let data = response.data; 
+        //Fix: Extract data from response object
+        let data = response.data; 
 
-          if (!Array.isArray(data) || data.length === 0) {
-              sublist.innerHTML = "<li>No data found</li>"; // Show message if empty
-              return;
-          }
+        if (!Array.isArray(data) || data.length === 0) {
+            sublist.innerHTML = "<li>No data found</li>"; // Show message if empty
+            return;
+        }
 
-              data.forEach((item) => {
-                let li = document.createElement("li");
-                //li.style.textAlign = "center";
-                let span = document.createElement("span");
-                span.textContent = item;
-                span.style.display = "block";
-                span.style.cursor = "pointer";
-                span.onclick = function () {
-                  showEntityDetails(catalog, item);
-                };
+        data.forEach((item) => {
+          let li = document.createElement("li");
+          let span = document.createElement("span");
+          span.textContent = item;
+          span.style.display = "block";
+          span.style.cursor = "pointer";
+          span.onclick = function () {
+            showEntityDetails(catalog, item);
+          };
 
-                li.appendChild(span);
-                sublist.appendChild(li);
-              });
+          li.appendChild(span);
+          sublist.appendChild(li);
+        });
       }
-
 
       //Delete Entities
       function deleteEntity(catalog, entity, listItem) {
@@ -117,7 +116,7 @@
         modal.style.display = "block"; // Show modal
       }
 
-      function closeModal() {
+      function closeModal(name) {
         document.getElementById("addEntityModal").style.display = "none";
       }
 
@@ -132,7 +131,7 @@
 
         google.script.run.withSuccessHandler(() => {
           alert(`Entity "${entityName}" added to ${catalog}`);
-          closeModal();
+          closeModal("addEntityModal");
           loadCatalogs(); // Refresh list
         }).addCatalogEntity(catalog, entityName);
       }
@@ -170,10 +169,6 @@
         }).getDocumentFields(catalog, entity);
       }
 
-      function closeUpdateModal() {
-        document.getElementById("showEntityModal").style.display = "none";
-      }
-
       function updateEntity() {
         let catalog = document.getElementById("fieldDropdown").getAttribute("data-catalog");
         let entity = document.getElementById("fieldDropdown").getAttribute("data-entity");
@@ -196,40 +191,35 @@
 
         google.script.run.withSuccessHandler(() => {
           alert(`"${field}" updated successfully!`);
-          closeUpdateModal();
+          closeModal("showEntityModal");
           loadCatalogs(); // Refresh list
         }).updateCatalogEntity(catalog, entity, updateData);
       }
 
       //Get data
       function toggleCatalog(catalog) {
-          console.log("Clicked category:", catalog); // Debugging log
+        console.log("Clicked category:", catalog); // Debugging log
 
-          let sublist = document.getElementById(`data-${catalog}`);
-          
-          if (!sublist) {
-              console.log("Error: Sublist element not found for", catalog);
-              return;
-          }
+        let sublist = document.getElementById(`data-${catalog}`);
+        
+        if (!sublist) {
+            console.log("Error: Sublist element not found for", catalog);
+            return;
+        }
 
-          if (sublist.style.display === "none") {
-              google.script.run.withSuccessHandler((data) => {
-                  console.log("Received data for", catalog, data); // Debugging log
-                  displayCatalogData(catalog, data);
-              }).getCatalogData(catalog);
+        if (sublist.style.display === "none") {
+          google.script.run.withSuccessHandler((data) => {
+              console.log("Received data for", catalog, data); // Debugging log
+              displayCatalogData(catalog, data);
+          }).getCatalogData(catalog);
 
-              sublist.style.display = "block"; // Expand
-          } else {
-              sublist.style.display = "none"; // Collapse
-          }
+          sublist.style.display = "block"; // Expand
+        } else {
+          sublist.style.display = "none"; // Collapse
+        }
       }
 
-      function closeViewModal() {
-      document.getElementById("viewEntityModal").style.display = "none";
-    }
-
-
-      function showEntityDetails(catalog, entityName) {
+    function showEntityDetails(catalog, entityName) {
       google.script.run.withSuccessHandler((entityData) => {
         const modal = document.getElementById("viewEntityModal");
         const nameDisplay = document.getElementById("viewEntityName");
@@ -262,21 +252,20 @@
         modal.style.display = "block";
       }).getCatalogEntity(catalog, entityName); 
     }
-
-
-      window.onload = loadCatalogs; 
+    
+    window.onload = loadCatalogs; 
     </script>
   </head>
   <body>
     <p>Choose a Catalog to Display:</p>
     <ul id = "catalogList">
       <li id="addEntity" onclick="showAddEntity()">Add an Entity</li>
-      <li id="backToLanding" onclick="navigateTo('LandingPage')">Go Back</li>
+      <li id="backToLanding" onclick="navigateTo('landingPage')">Go Back</li>
     </ul>
 
     <div id="addEntityModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
+        <span class="close" onclick="closeModal('addEntityModal')">&times;</span>
         <h2>Add a New Entity</h2>
 
         <label for="catalogDropdown">Select Catalog:</label>
@@ -290,13 +279,13 @@
         <br><br>
 
         <button onclick="submitNewEntity()">Add Entity</button>
-        <button onclick="closeModal()">Cancel</button>
+        <button onclick="closeModal('addEntityModal')">Cancel</button>
       </div>
     </div>
 
     <div id="showEntityModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeUpdateModal()">&times;</span>
+        <span class="close" onclick="closeModal('showEntityModal')">&times;</span>
         <h2>Add a New Entity</h2>
 
         <label for="fieldDropdown">Select Catalog:</label>
@@ -310,13 +299,13 @@
         <br><br>
 
         <button onclick="updateEntity()">Update Entity</button>
-        <button onclick="closeUpdateModal()">Cancel</button>
+        <button onclick="closeModal('showEntityModal')">Cancel</button>
       </div>
     </div>
 
     <div id="viewEntityModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeViewModal()">&times;</span>
+        <span class="close" onclick="closeModal('viewEntityModal')">&times;</span>
         <h2>Entity Details</h2>
         <p id="viewEntityName" style="font-weight: bold;"></p>
         <ul style="list-style: none;" id="entityDetailsList"></ul>

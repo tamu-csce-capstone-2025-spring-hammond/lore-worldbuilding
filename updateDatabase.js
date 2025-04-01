@@ -1,3 +1,13 @@
+//Delete Entities
+function deleteEntity(catalog, entity, listItem) {
+  let confirmDelete = confirm(`Are you sure you want to delete "${entity}" from ${catalog}?`);
+  if (!confirmDelete) return;
+
+  google.script.run.withSuccessHandler(() => {
+    listItem.remove(); // Remove from UI
+  }).deleteCatalogEntity(catalog, entity);
+}
+
 function deleteCatalogEntity(catalog, entity){
   //catalog = "Characters";
   //entity - "Test"
