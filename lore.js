@@ -16,9 +16,8 @@ function onOpen() {
 }
 
 // Navigate pages START //
-
 function showLandingPage() {
-  var template = HtmlService.createTemplateFromFile('LandingPage');
+  var template = HtmlService.createTemplateFromFile('landingPage');
   var html = template.evaluate().setTitle('LORE Worldbuilder').setWidth(500);
   DocumentApp.getUi().showSidebar(html);
 }
@@ -28,16 +27,16 @@ function showPage(page) {
   try {
     var htmlFile;
     
-    if (page === "viewCatalogs") {
+    if (page == "viewCatalogs") {
       htmlFile = "viewCatalogs"; // This should match viewCatalogs.html
-    } else if (page === "viewTimeline") {
+    } else if (page == "viewTimeline") {
       htmlFile = "viewTimeline"; // This should match viewTimeline.html
     } else if(page == "viewSettings") {
       htmlFile = "viewSettings"
-    } else if(page == "LandingPage") {
-      htmlFile = "LandingPage";
-    } else if(page == "Proper"){
-      htmlFile = "Proper"
+    } else if(page == "landingPage") {
+      htmlFile = "landingPage";
+    } else if(page == "viewProperNouns"){
+      htmlFile = "viewProperNouns"
     } else {
       throw new Error("Invalid page requested: " + page);
     }
@@ -62,7 +61,6 @@ function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename)
       .getContent();
 }
-
 // Navigate pages END //
 
 function installAddon() {
