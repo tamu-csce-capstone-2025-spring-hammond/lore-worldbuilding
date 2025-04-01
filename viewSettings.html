@@ -21,10 +21,32 @@
         <!-- Button 4 yellow-->
         <button class="accent-btn" style="background-color: #f39c12" onclick="changeAccentColor('#f39c12')"> </button>
       </div>
+
       <h1> Sort Entities By: </h1>
+      <select id="catalogDropdown">
+        <option value="catalog1">Number of Occurences</option>
+        <option value="catalog2">Alphabetically</option>
+        <option value="catalog3">Newest Entities</option>
+      </select>
+
       <h1> Add New Entity Type: </h1>
+      <div class="input-container">
+        <input type="text" id="newInput" placeholder="Enter something...">
+        <button id="addButton" onclick="addItem()">+</button>
+      </div>
+
       <h1> Font Size: </h1>
-      <h1> Accessibility: </h1>
+      <div class="button-container">
+        <!-- Button 1: green -->
+        <button class="accent-btn" style="font-size: 16px"> aA </button>
+
+        <!-- Button 2 blue -->
+        <button class="accent-btn" style="font-size: 24px"> aA </button>
+
+        <!-- Button 3 red --> 
+        <button class="accent-btn" style="font-size: 32px"> aA </button>
+      </div>
+
       <a href="#" class="option" onclick="navigateTo('landingPage')">Back</a>
     </div>
 
