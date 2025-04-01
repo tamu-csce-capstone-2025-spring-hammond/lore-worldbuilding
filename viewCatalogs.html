@@ -117,7 +117,7 @@
       }
 
       function closeModal(name) {
-        document.getElementById("addEntityModal").style.display = "none";
+        document.getElementById(name).style.display = "none";
       }
 
       function submitNewEntity() {
@@ -257,7 +257,9 @@
     </script>
   </head>
   <body>
-    <p>Choose a Catalog to Display:</p>
+    <h1>Choose a Catalog to Display:</h1>
+    <input type="text" id="searchInput" onkeyup="filterCatalogs()" placeholder="Search catalogs...">
+
     <ul id = "catalogList">
       <li id="addEntity" onclick="showAddEntity()">Add an Entity</li>
       <li id="backToLanding" onclick="navigateTo('landingPage')">Go Back</li>
