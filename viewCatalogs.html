@@ -7,7 +7,6 @@
     <?!= include('defaultStyles'); ?>
 
     <script>
-
       // Display each catalog
       function loadCatalogs() {
         google.script.run.withSuccessHandler(displayCatalogs).getCatalogs();
@@ -15,16 +14,6 @@
 
       function displayCatalogs(catalogs) {
         let list = document.getElementById("catalogList");
-
-        let backButton = document.getElementById("backToLanding");
-        if (!backButton) {
-          backButton = document.createElement("li");
-          backButton.id = "backToLanding";
-          backButton.textContent = "Go Back";
-          backButton.onclick = function () {
-            navigateTo('landingPage');
-          };
-        }
 
         let addButton = document.getElementById("addEntity");
         if (!addButton) {
@@ -51,7 +40,6 @@
           list.appendChild(li);
         });
         list.appendChild(addButton);
-        list.appendChild(backButton);
 
         window.catalogsList = catalogs;
       }
@@ -95,7 +83,6 @@
           listItem.remove(); // Remove from UI
         }).deleteCatalogEntity(catalog, entity);
       }
-
 
       //Adding Entities
       function showAddEntity() {
@@ -223,50 +210,149 @@
       google.script.run.withSuccessHandler((entityData) => {
         const modal = document.getElementById("viewEntityModal");
         const nameDisplay = document.getElementById("viewEntityName");
-        const list = document.getElementById("entityDetailsList");
+        const appearanceList = document.getElementById("entityAppearanceList");
+        const detailsList = document.getElementById("entityDetailsList");
+        const otherList = document.getElementById("entityOtherList");
 
-        nameDisplay.textContent = `Catalog: ${catalog} — ${entityName}`;
-        list.innerHTML = ""; // Clear previous
+        // nameDisplay.textContent = `Catalog: ${catalog} — ${entityName}`;
+        nameDisplay.textContent = `${entityName}`;
+
+        // Clear previous
+        appearanceList.innerHTML = ""; 
+        detailsList.innerHTML = "";
+        otherList.innerHTML = "";
 
         if (!entityData || Object.keys(entityData).length === 0) {
-          list.innerHTML = "<li>No data available</li>";
+          appearanceList.innerHTML = "<li>No data available</li>";
+          detailsList.innerHTML = "<li>No data available</li>";
+          otherList.innerHTML = "<li>No data available</li>";
         } else {
-          Object.keys(entityData).forEach((key) => {
-            const li = document.createElement("li");
-            let value = entityData[key];
+          const appearanceOrder = [
+            "HairColor",
+            "EyeColor",
+            "SkinColor",
+            "Weight",
+            "Build",
+            "DistinctFeatures",
+            "Height"
+          ];
 
-            // Format arrays
-            if (Array.isArray(value)) {
-              value = value.join(", ");
+          const detailsOrder = [
+            // "Name",
+            "Gender",
+            "Age",
+            "Nationality",
+            "Aliases"
+          ];
+
+          const otherOrder = [
+            "StoryAppearances",
+            "Accessories"
+          ];
+
+          appearanceOrder.forEach((key) => {
+            if (entityData.hasOwnProperty(key)) {
+              const li = document.createElement("li");
+              let value = entityData[key];
+
+              // Format arrays
+              if (Array.isArray(value)) {
+                value = value.join(", ");
+              }
+
+              const formattedKey = key
+                // reformats 'camelCase' to 'Camel Case'
+                .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space
+                .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
+
+              li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
+              appearanceList.appendChild(li);
             }
+          });
 
-          const formattedKey = key
-            .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space
-            .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
+          detailsOrder.forEach((key) => {
+            if (entityData.hasOwnProperty(key)) {
+              const li = document.createElement("li");
+              let value = entityData[key];
 
-            li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
-            list.appendChild(li);
+              // Format arrays
+              if (Array.isArray(value)) {
+                value = value.join(", ");
+              }
+
+              const formattedKey = key
+                // reformats 'camelCase' to 'Camel Case'
+                .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space
+                .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
+
+              li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
+              detailsList.appendChild(li);
+            }
+          });
+
+          otherOrder.forEach((key) => {
+            if (entityData.hasOwnProperty(key)) {
+              const li = document.createElement("li");
+              let value = entityData[key];
+
+              // Format arrays
+              if (Array.isArray(value)) {
+                value = value.join(", ");
+              }
+
+              const formattedKey = key
+                // reformats 'camelCase' to 'Camel Case'
+                .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space
+                .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
+
+              li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
+              otherList.appendChild(li);
+            }
           });
         }
 
         modal.style.display = "block";
       }).getCatalogEntity(catalog, entityName); 
     }
+
+    function openTab(evt, tabInfo) {
+      // Declare all variables
+      var i, tabcontent, tablinks;
+
+      // Get all elements with class="tabcontent" and hide them
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+
+      // Get all elements with class="tablinks" and remove the class "active"
+      tablinks = document.getElementsByClassName("tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+
+      // Show the current tab, and add an "active" class to the button that opened the tab
+      document.getElementById(tabInfo).style.display = "block";
+      evt.currentTarget.className += " active";
+    }
     
     window.onload = loadCatalogs; 
     </script>
   </head>
   <body>
+    <div class="back-btn-container">
+      <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
+    </div>
+   
     <h1>Choose a Catalog to Display:</h1>
     <input type="text" id="searchInput" onkeyup="filterCatalogs()" placeholder="Search catalogs...">
 
     <ul id = "catalogList">
       <li id="addEntity" onclick="showAddEntity()">Add an Entity</li>
-      <li id="backToLanding" onclick="navigateTo('landingPage')">Go Back</li>
     </ul>
 
-    <div id="addEntityModal" class="modal">
-      <div class="modal-content">
+    <div id="addEntityModal" class="modal-container">
+      <div class="modal-popup">
         <span class="close" onclick="closeModal('addEntityModal')">&times;</span>
         <h2>Add a New Entity</h2>
 
@@ -285,8 +371,8 @@
       </div>
     </div>
 
-    <div id="showEntityModal" class="modal">
-      <div class="modal-content">
+    <div id="showEntityModal" class="modal-container">
+      <div class="modal-popup">
         <span class="close" onclick="closeModal('showEntityModal')">&times;</span>
         <h2>Add a New Entity</h2>
 
@@ -305,12 +391,34 @@
       </div>
     </div>
 
-    <div id="viewEntityModal" class="modal">
-      <div class="modal-content">
-        <span class="close" onclick="closeModal('viewEntityModal')">&times;</span>
-        <h2>Entity Details</h2>
-        <p id="viewEntityName" style="font-weight: bold;"></p>
-        <ul style="list-style: none;" id="entityDetailsList"></ul>
+    <div id="viewEntityModal" class="modal-container">
+      <div class="modal-popup">
+        <div class="modal-content">
+          <h2 class="character-name" id="viewEntityName" style="font-weight: bold;"></h2>
+          <p class="close" onclick="closeModal('viewEntityModal')">&times;</p>
+          
+
+          <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'Appearance')">Appearance</button>
+            <button class="tablinks" onclick="openTab(event, 'Details')">Details</button>
+            <button class="tablinks" onclick="openTab(event, 'Other')">Other</button>
+          </div>
+
+          <!-- Tab content -->
+          <div id="Appearance" class="tabcontent">
+            <ul class="character-information" id="entityAppearanceList"></ul>
+          </div>
+
+          <div id="Details" class="tabcontent">
+            <ul class="character-information" id="entityDetailsList"></ul>
+          </div>
+
+          <div id="Other" class="tabcontent">
+            <ul class="character-information" id="entityOtherList"></ul>
+          </div>
+
+
+        </div>
       </div>
     </div>
 
