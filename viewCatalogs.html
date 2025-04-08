@@ -210,47 +210,41 @@
       google.script.run.withSuccessHandler((entityData) => {
         const modal = document.getElementById("viewEntityModal");
         const nameDisplay = document.getElementById("viewEntityName");
-        const appearanceList = document.getElementById("entityAppearanceList");
-        const detailsList = document.getElementById("entityDetailsList");
-        const otherList = document.getElementById("entityOtherList");
+        const attributesList = document.getElementById("entityAttributesList");
+        const occurrencesList = document.getElementById("entityOccurencesList");
 
         // nameDisplay.textContent = `Catalog: ${catalog} — ${entityName}`;
         nameDisplay.textContent = `${entityName}`;
 
         // Clear previous
-        appearanceList.innerHTML = ""; 
-        detailsList.innerHTML = "";
-        otherList.innerHTML = "";
+        attributesList.innerHTML = ""; 
+        occurrencesList.innerHTML = "";
 
         if (!entityData || Object.keys(entityData).length === 0) {
-          appearanceList.innerHTML = "<li>No data available</li>";
-          detailsList.innerHTML = "<li>No data available</li>";
-          otherList.innerHTML = "<li>No data available</li>";
+          attributesList.innerHTML = "<li>No data available</li>";
+          occurrencesList.innerHTML = "<li>No data available</li>";
         } else {
-          const appearanceOrder = [
+          const attributesOrder = [
             "HairColor",
             "EyeColor",
             "SkinColor",
             "Weight",
             "Build",
             "DistinctFeatures",
-            "Height"
-          ];
-
-          const detailsOrder = [
+            "Height",
             // "Name",
             "Gender",
             "Age",
             "Nationality",
-            "Aliases"
-          ];
-
-          const otherOrder = [
-            "StoryAppearances",
+            "Aliases",
             "Accessories"
           ];
 
-          appearanceOrder.forEach((key) => {
+          const occurencesOrder = [
+            "StoryAppearances"
+          ];
+
+          attributesOrder.forEach((key) => {
             if (entityData.hasOwnProperty(key)) {
               const li = document.createElement("li");
               let value = entityData[key];
@@ -266,11 +260,11 @@
                 .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
 
               li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
-              appearanceList.appendChild(li);
+              attributesList.appendChild(li);
             }
           });
 
-          detailsOrder.forEach((key) => {
+          occurencesOrder.forEach((key) => {
             if (entityData.hasOwnProperty(key)) {
               const li = document.createElement("li");
               let value = entityData[key];
@@ -286,27 +280,7 @@
                 .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
 
               li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
-              detailsList.appendChild(li);
-            }
-          });
-
-          otherOrder.forEach((key) => {
-            if (entityData.hasOwnProperty(key)) {
-              const li = document.createElement("li");
-              let value = entityData[key];
-
-              // Format arrays
-              if (Array.isArray(value)) {
-                value = value.join(", ");
-              }
-
-              const formattedKey = key
-                // reformats 'camelCase' to 'Camel Case'
-                .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space
-                .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
-
-              li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
-              otherList.appendChild(li);
+              occurrencesList.appendChild(li);
             }
           });
         }
@@ -399,25 +373,32 @@
           
 
           <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'Appearance')">Appearance</button>
-            <button class="tablinks" onclick="openTab(event, 'Details')">Details</button>
-            <button class="tablinks" onclick="openTab(event, 'Other')">Other</button>
+            <button class="tablinks" onclick="openTab(event, 'Attributes')">Attributes</button>
+            <button class="tablinks" onclick="openTab(event, 'Graphs')">Graphs</button>
+            <button class="tablinks" onclick="openTab(event, 'Occurences')">Occurences</button>
+            <button class="tablinks" onclick="openTab(event, 'Summary')">Summary</button>
+            <button class="tablinks" onclick="openTab(event, 'Relationships')">Relationships</button>
           </div>
 
-          <!-- Tab content -->
-          <div id="Appearance" class="tabcontent">
-            <ul class="character-information" id="entityAppearanceList"></ul>
+          <div id="Attributes" class="tabcontent">
+            <ul class="character-information" id="entityAttributesList"></ul>
           </div>
 
-          <div id="Details" class="tabcontent">
-            <ul class="character-information" id="entityDetailsList"></ul>
+          <div id="Graphs" class="tabcontent">
+            <p>placeholder text</p>
           </div>
 
-          <div id="Other" class="tabcontent">
-            <ul class="character-information" id="entityOtherList"></ul>
+          <div id="Occurences" class="tabcontent">
+            <ul class="character-information" id="entityOccurencesList"></ul>
           </div>
 
+          <div id="Summary" class="tabcontent">
+            <p>placeholder text</p>
+          </div>
 
+          <div id="Relationships" class="tabcontent">
+            <p>placeholder text</p>
+          </div>
         </div>
       </div>
     </div>
