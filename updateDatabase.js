@@ -37,6 +37,7 @@ function deleteCatalogEntity(catalog, entity){
 }
 
 function addCatalogEntity(catalog, entityName) {
+  console.log("Adding an entity to the database...");
   var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
 
   // Base fields

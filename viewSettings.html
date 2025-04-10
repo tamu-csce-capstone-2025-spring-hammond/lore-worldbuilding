@@ -6,48 +6,52 @@
     <?!= include('viewSettingsStyles'); ?>
   </head>
   <body>
-    <div id="sidebar" class="container">
-      <h1>Accent Color:</h1>
-      <div class="button-container">
-        <!-- Button 1: green -->
-        <button class="accent-btn" style="background-color: #64b579" onclick="changeAccentColor('#64b579')"> </button>
+    <div class="back-btn-container">
+      <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
+    </div>
 
-        <!-- Button 2 blue -->
-        <button class="accent-btn" style="background-color: #5858b8" onclick="changeAccentColor('#5858b8')"> </button>
 
-        <!-- Button 3 red --> 
-        <button class="accent-btn" style="background-color: #e74c3c" onclick="changeAccentColor('#e74c3c')"> </button>
+    <h1>Accent Color:</h1>
+    <div class="button-container">
+      <!-- Button 1: green -->
+      <button class="accent-btn" style="background-color: #64b579" onclick="changeAccentColor('#64b579')"> </button>
 
-        <!-- Button 4 yellow-->
-        <button class="accent-btn" style="background-color: #f39c12" onclick="changeAccentColor('#f39c12')"> </button>
-      </div>
+      <!-- Button 2 blue -->
+      <button class="accent-btn" style="background-color: #8dafb8" onclick="changeAccentColor('#8dafb8')"> </button>
 
-      <h1> Sort Entities By: </h1>
-      <select id="catalogDropdown">
-        <option value="catalog1">Number of Occurences</option>
-        <option value="catalog2">Alphabetically</option>
-        <option value="catalog3">Newest Entities</option>
-      </select>
+      <!-- Button 3 red --> 
+      <button class="accent-btn" style="background-color: #c9807b" onclick="changeAccentColor('#c9807b')"> </button>
 
-      <h1> Add New Entity Type: </h1>
-      <div class="input-container">
-        <input type="text" id="newInput" placeholder="Enter something...">
-        <button id="addButton" onclick="addItem()">+</button>
-      </div>
+      <!-- Button 4 yellow-->
+      <button class="accent-btn" style="background-color: #e8db7b" onclick="changeAccentColor('#e8db7b')"> </button>
 
-      <h1> Font Size: </h1>
-      <div class="button-container">
-        <!-- Button 1: green -->
-        <button class="accent-btn" style="font-size: 16px"> aA </button>
+      <!-- Button 5 purple-->
+      <button class="accent-btn" style="background-color: #a28db8" onclick="changeAccentColor('#a28db8')"> </button>
+    </div>
 
-        <!-- Button 2 blue -->
-        <button class="accent-btn" style="font-size: 24px"> aA </button>
+    <h1> Sort Entities By: </h1>
+    <select id="catalogDropdown">
+      <option value="catalog1">Number of Occurences</option>
+      <option value="catalog2">Alphabetically</option>
+      <option value="catalog3">Newest Entities</option>
+    </select>
 
-        <!-- Button 3 red --> 
-        <button class="accent-btn" style="font-size: 32px"> aA </button>
-      </div>
+    <h1> Add New Entity Type: </h1>
+    <div class="input-container">
+      <input type="text" id="newInput" placeholder="Enter something...">
+      <button id="addButton" onclick="addItem()">+</button>
+    </div>
 
-      <a href="#" class="option" onclick="navigateTo('landingPage')">Back</a>
+    <h1> Font Size: </h1>
+    <div class="button-container">
+      <!-- Button 1: green -->
+      <button class="accent-btn" style="font-size: 16px"> aA </button>
+
+      <!-- Button 2 blue -->
+      <button class="accent-btn" style="font-size: 24px"> aA </button>
+
+      <!-- Button 3 red --> 
+      <button class="accent-btn" style="font-size: 32px"> aA </button>
     </div>
 
     <script>
