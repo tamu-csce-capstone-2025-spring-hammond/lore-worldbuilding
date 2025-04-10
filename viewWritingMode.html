@@ -60,9 +60,13 @@
             .addCatalogEntity('Events', entityName);
         };
 
+        const btn4 = document.createElement('button');
+        btn4.textContent = 'Ignore';
+
         buttonGroup.appendChild(btn1);
         buttonGroup.appendChild(btn2);
         buttonGroup.appendChild(btn3);
+        buttonGroup.appendChild(btn4);
 
         wrapper.appendChild(nameSpan);
         wrapper.appendChild(buttonGroup);

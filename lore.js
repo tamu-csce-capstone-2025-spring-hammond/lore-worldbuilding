@@ -100,7 +100,8 @@ function findProperNouns() {
   allMatches.forEach(name => {
     if (!excludeWords.has(name)) {
       var nameParts = name.split(/\s|-/);
-      var baseName = nameParts[nameParts.length - 1]; // Get the last word as the base name
+      var baseName = nameParts[nameParts.length - 1]; 
+      // Get the last word as the base name
 
       if (baseNames.has(baseName)) {
         // If the base name already exists with a title, prefer the longer full name
@@ -117,17 +118,14 @@ function findProperNouns() {
     }
   });
 
-  return uniqueProperNouns.size ? [...uniqueProperNouns] : ["No proper nouns found."];
+  return uniqueProperNouns.size ? [...uniqueProperNouns] : ["None"];
 }
 
-// TODO: user prompt function
-// check if noun already exists in DB (character name or as an alias)
-// check that it's not already in the 'ignore' list
-// if not prompt user for noun type 'character' 'location' etc. or 'ignore'
-// if user chooses an object type, send to DB
+function getNewProperNouns(){
+  var all = findProperNouns();
+  var existing = [''];// get proper nouns from database
+  var newProperNouns = all.filter(word => !existing.includes(word));
 
-// Function to pass data to the sidebar
-function getProperNounsForSidebar() {
-  var properNouns = findProperNouns();
-  return properNouns;
+  return newProperNouns;
 }
+
