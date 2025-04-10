@@ -37,6 +37,8 @@ function showPage(page) {
       htmlFile = "landingPage";
     } else if(page == "viewProperNouns"){
       htmlFile = "viewProperNouns"
+    } else if(page == "viewWritingMode"){
+      htmlFile = "viewWritingMode"
     } else {
       throw new Error("Invalid page requested: " + page);
     }

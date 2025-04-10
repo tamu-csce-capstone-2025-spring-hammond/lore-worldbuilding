@@ -11,25 +11,18 @@
     </style>
   </head>
   <body>
-    <div id="sidebar" class="container">
-      <a href="#" class="option" onclick="navigateTo('landingPage')">Back</a>
+    <div class="back-btn-container">
+      <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
     </div>
 
     <script>
-      // JORDYN IS WORKING ON THIS RN
       function navigateTo(page) {
         google.script.run.showPage(page);
       }
 
       function adjustPageHeight() {
         let sidebar = document.getElementById('sidebar');
-        // let pages = document.querySelectorAll('.option');
-
         let sidebarHeight = sidebar.clientHeight;
-
-        // pages.forEach(page => {
-        //     page.style.height = `${sidebarHeight}px`;
-        // });
       }
 
       window.addEventListener('load', adjustPageHeight);

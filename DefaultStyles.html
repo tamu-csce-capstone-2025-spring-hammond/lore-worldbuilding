@@ -51,6 +51,14 @@
     font-size: 22px;
     font-weight: bold;
     color: #3c4a3e;
+    margin-top: 5px;
+  }
+
+  h2 {
+    font-size: 30px;
+    font-weight: bold;
+    color: #3c4a3e;
+    margin-top: 5px;
   }
 
   p {
@@ -71,6 +79,29 @@
   
   .continue-btn:hover {
     background-color: #95b1ee;
+  }
+
+  .back-btn {
+    background-color: #9fafa1;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin: 10px;
+    text-decoration: none;
+  }
+
+  .back-btn:hover {
+    background-color: #839b91;
+  }
+
+  .back-btn-container {
+    height: 60px;
+    display: flex;
+    justify-content: left;
+    align-items: center;
   }
 
   .container {
@@ -101,25 +132,34 @@
   }
 
   // handles how pop ups (modals) are displayed
-  .modal {
+  .modal-container {
     display: none;
     position: fixed;
-    z-index: 1;
     left: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background-color: rgba(0, 0, 0, 0.4);
   }
 
-  .modal-content {
+  .modal-popup {
     background-color: white;
-    margin: 4% auto;
-    padding: 10px;
     border: 1px solid #888;
-    width: 92%;
-    text-align: center;
-    max-width: 400px;
+    width: 95%;
+    height: 75%;
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+  }
+
+  .modal-content {
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: auto;
+    margin-bottom: auto;
   }
 
   .sidebar-container {
@@ -132,6 +172,7 @@
     margin-right: auto;
     margin-bottom: 35px;
   }
+
   #bottom-text-block {
     width: 80%;
     margin-left: auto;
@@ -141,9 +182,17 @@
 
   .close {
     color: red;
-    float: right;
+    margin-left: auto;
     font-size: 28px;
     cursor: pointer;
+    position: absolute;
+    z-index: 2;
+    right: 15px;
+    text-align: center;
+    display: inline-block;
+    padding: 0;
+    margin-bottom: 0;
+    margin-top: 5px;
   }
 
   .close:hover {

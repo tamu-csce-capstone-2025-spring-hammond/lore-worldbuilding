@@ -1,0 +1,82 @@
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('defaultStyles'); ?>
+    <?!= include('viewWritingModeStyles'); ?>
+  </head>
+  <body>
+    <div class="back-btn-container">
+      <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
+    </div>
+
+    <div id="container"></div>
+
+    <script>
+      function navigateTo(page) {
+        google.script.run.showPage(page);
+      }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      function addNewDiv(entityName) {
+        const container = document.getElementById('container');
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'entity-container';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = entityName;
+
+        const buttonGroup = document.createElement('div');
+        buttonGroup.className = 'button-group';
+
+        const btn1 = document.createElement('button');
+        btn1.textContent = 'Character';
+        btn1.onclick = function () {
+          console.log("Adding character...");
+          google.script.run
+            .withSuccessHandler(() => {
+              wrapper.remove(); // remove the entire div after success
+            })
+            .addCatalogEntity('Characters', entityName);
+        };
+
+        const btn2 = document.createElement('button');
+        btn2.textContent = 'Location';
+        btn2.onclick = function () {
+          google.script.run
+            .withSuccessHandler(() => {
+              wrapper.remove(); // remove the entire div after success
+            })
+            .addCatalogEntity('Locations', entityName);
+        };
+
+        const btn3 = document.createElement('button');
+        btn3.textContent = 'Event';
+        btn3.onclick = function () {
+          google.script.run
+            .withSuccessHandler(() => {
+              wrapper.remove(); // remove the entire div after success
+            })
+            .addCatalogEntity('Events', entityName);
+        };
+
+        buttonGroup.appendChild(btn1);
+        buttonGroup.appendChild(btn2);
+        buttonGroup.appendChild(btn3);
+
+        wrapper.appendChild(nameSpan);
+        wrapper.appendChild(buttonGroup);
+
+        container.appendChild(wrapper);
+      }
+
+      // adds a new div every time the button is pressed with the entity name-->
+      // calls addNewDiv every 10,000 milliseconds (10 seconds) -->
+      setInterval(() => {
+        const timestamp = new Date().toLocaleTimeString();
+        addNewDiv("placeholderEntityName " + timestamp);
+      }, 10000);
+    });
+    </script>
+  </body>
+</html>
