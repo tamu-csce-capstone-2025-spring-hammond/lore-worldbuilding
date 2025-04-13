@@ -4,26 +4,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <?!= include('viewCatalogsStyles'); ?>
+    <?!= include('defaultStyles'); ?>
 
     <script>
-      //display each catalog and add/go back option
+      // Display each catalog
       function loadCatalogs() {
         google.script.run.withSuccessHandler(displayCatalogs).getCatalogs();
       }
 
       function displayCatalogs(catalogs) {
         let list = document.getElementById("catalogList");
-
-        let backButton = document.getElementById("backToLanding");
-        if (!backButton) {
-          backButton = document.createElement("li");
-          backButton.id = "backToLanding";
-          backButton.textContent = "Go Back";
-          backButton.onclick = function () {
-            navigateTo('LandingPage');
-          };
-        }
-
 
         let addButton = document.getElementById("addEntity");
         if (!addButton) {
@@ -35,7 +25,8 @@
           };
         }
 
-        list.innerHTML = ""; // Clear previous items
+        // Clear previous items
+        list.innerHTML = ""; 
 
         catalogs.forEach((catalog) => {
           let li = document.createElement("li");
@@ -49,58 +40,39 @@
           list.appendChild(li);
         });
         list.appendChild(addButton);
-        list.appendChild(backButton);
 
         window.catalogsList = catalogs;
       }
 
-
-      //display each catalog's items
+      // Display each catalog's items
       function displayCatalogData(catalog, response) {
-          console.log("Data received for catalog:", catalog, response);
+        console.log("Data received for catalog:", catalog, response);
 
-          let sublist = document.getElementById(`data-${catalog}`);
-          sublist.innerHTML = ""; // Clear old data
+        let sublist = document.getElementById(`data-${catalog}`);
+        sublist.innerHTML = ""; // Clear old data
 
-          //Fix: Extract data from response object
-          let data = response.data; 
+        //Fix: Extract data from response object
+        let data = response.data; 
 
-          if (!Array.isArray(data) || data.length === 0) {
-              sublist.innerHTML = "<li>No data found</li>"; // Show message if empty
-              return;
-          }
-              data.forEach((item) => {
-                let li = document.createElement("li");
-                //li.style.textAlign = "center";
-                let span = document.createElement("span");
-                span.textContent = item;
-                span.style.display = "block";
+        if (!Array.isArray(data) || data.length === 0) {
+            sublist.innerHTML = "<li>No data found</li>"; // Show message if empty
+            return;
+        }
 
-                // Create delete button
-                let deleteButton = document.createElement("button");
-                deleteButton.textContent = "❌";
-                deleteButton.style.marginTop = "25px"; // Spacing
-                deleteButton.style.display = "block";
-                deleteButton.onclick = function () {
-                  deleteEntity(catalog, item, li);
-                };
+        data.forEach((item) => {
+          let li = document.createElement("li");
+          let span = document.createElement("span");
+          span.textContent = item;
+          span.style.display = "block";
+          span.style.cursor = "pointer";
+          span.onclick = function () {
+            showEntityDetails(catalog, item);
+          };
 
-                let updateButton = document.createElement("button");
-                updateButton.textContent = "Update Entity";
-                updateButton.style.marginTop = "25px"; // Spacing
-                updateButton.style.display = "block";
-                updateButton.onclick = function () {
-                  console.log("Updating entity:", catalog, item);  // ✅ Debugging log
-                  showUpdateEntity(catalog, item);
-                };
-
-                li.appendChild(span);
-                li.appendChild(deleteButton);
-                li.appendChild(updateButton);
-                sublist.appendChild(li);
-              });
+          li.appendChild(span);
+          sublist.appendChild(li);
+        });
       }
-
 
       //Delete Entities
       function deleteEntity(catalog, entity, listItem) {
@@ -111,7 +83,6 @@
           listItem.remove(); // Remove from UI
         }).deleteCatalogEntity(catalog, entity);
       }
-
 
       //Adding Entities
       function showAddEntity() {
@@ -132,8 +103,8 @@
         modal.style.display = "block"; // Show modal
       }
 
-      function closeModal() {
-        document.getElementById("addEntityModal").style.display = "none";
+      function closeModal(name) {
+        document.getElementById(name).style.display = "none";
       }
 
       function submitNewEntity() {
@@ -147,11 +118,10 @@
 
         google.script.run.withSuccessHandler(() => {
           alert(`Entity "${entityName}" added to ${catalog}`);
-          closeModal();
+          closeModal("addEntityModal");
           loadCatalogs(); // Refresh list
         }).addCatalogEntity(catalog, entityName);
       }
-
 
       function showUpdateEntity(catalog, entity) {
         let modal = document.getElementById("showEntityModal");
@@ -165,7 +135,7 @@
         select.innerHTML = ""; // Clear previous options
 
         select.setAttribute("data-catalog", catalog);
-        select.setAttribute("data-entity", documentID);
+        select.setAttribute("data-entity", entity);
 
         // Call Firestore to get document fields
         google.script.run.withSuccessHandler((fields) => {
@@ -183,11 +153,7 @@
           });
 
           modal.style.display = "block"; 
-        }).getDocumentFields(catalog, documentID);
-      }
-
-      function closeUpdateModal() {
-        document.getElementById("showEntityModal").style.display = "none";
+        }).getDocumentFields(catalog, entity);
       }
 
       function updateEntity() {
@@ -212,50 +178,156 @@
 
         google.script.run.withSuccessHandler(() => {
           alert(`"${field}" updated successfully!`);
-          closeUpdateModal();
+          closeModal("showEntityModal");
           loadCatalogs(); // Refresh list
         }).updateCatalogEntity(catalog, entity, updateData);
       }
 
-
-
-
       //Get data
       function toggleCatalog(catalog) {
-          console.log("Clicked category:", catalog); // Debugging log
+        console.log("Clicked category:", catalog); // Debugging log
 
-          let sublist = document.getElementById(`data-${catalog}`);
-          
-          if (!sublist) {
-              console.log("Error: Sublist element not found for", catalog);
-              return;
-          }
+        let sublist = document.getElementById(`data-${catalog}`);
+        
+        if (!sublist) {
+            console.log("Error: Sublist element not found for", catalog);
+            return;
+        }
 
-          if (sublist.style.display === "none") {
-              google.script.run.withSuccessHandler((data) => {
-                  console.log("Received data for", catalog, data); // Debugging log
-                  displayCatalogData(catalog, data);
-              }).getCatalogData(catalog);
+        if (sublist.style.display === "none") {
+          google.script.run.withSuccessHandler((data) => {
+              console.log("Received data for", catalog, data); // Debugging log
+              displayCatalogData(catalog, data);
+          }).getCatalogData(catalog);
 
-              sublist.style.display = "block"; // Expand
-          } else {
-              sublist.style.display = "none"; // Collapse
-          }
+          sublist.style.display = "block"; // Expand
+        } else {
+          sublist.style.display = "none"; // Collapse
+        }
       }
-      
-      window.onload = loadCatalogs; 
+
+    function showEntityDetails(catalog, entityName) {
+      google.script.run.withSuccessHandler((entityData) => {
+        const modal = document.getElementById("viewEntityModal");
+        const nameDisplay = document.getElementById("viewEntityName");
+        const attributesList = document.getElementById("entityAttributesList");
+        const occurrencesList = document.getElementById("entityOccurencesList");
+
+        // nameDisplay.textContent = `Catalog: ${catalog} — ${entityName}`;
+        nameDisplay.textContent = `${entityName}`;
+
+        // Clear previous
+        attributesList.innerHTML = ""; 
+        occurrencesList.innerHTML = "";
+
+        if (!entityData || Object.keys(entityData).length === 0) {
+          attributesList.innerHTML = "<li>No data available</li>";
+          occurrencesList.innerHTML = "<li>No data available</li>";
+        } else {
+          const attributesOrder = [
+            "HairColor",
+            "EyeColor",
+            "SkinColor",
+            "Weight",
+            "Build",
+            "DistinctFeatures",
+            "Height",
+            // "Name",
+            "Gender",
+            "Age",
+            "Nationality",
+            "Aliases",
+            "Accessories"
+          ];
+
+          const occurencesOrder = [
+            "StoryAppearances"
+          ];
+
+          attributesOrder.forEach((key) => {
+            if (entityData.hasOwnProperty(key)) {
+              const li = document.createElement("li");
+              let value = entityData[key];
+
+              // Format arrays
+              if (Array.isArray(value)) {
+                value = value.join(", ");
+              }
+
+              const formattedKey = key
+                // reformats 'camelCase' to 'Camel Case'
+                .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space
+                .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
+
+              li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
+              attributesList.appendChild(li);
+            }
+          });
+
+          occurencesOrder.forEach((key) => {
+            if (entityData.hasOwnProperty(key)) {
+              const li = document.createElement("li");
+              let value = entityData[key];
+
+              // Format arrays
+              if (Array.isArray(value)) {
+                value = value.join(", ");
+              }
+
+              const formattedKey = key
+                // reformats 'camelCase' to 'Camel Case'
+                .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space
+                .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
+
+              li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
+              occurrencesList.appendChild(li);
+            }
+          });
+        }
+
+        modal.style.display = "block";
+      }).getCatalogEntity(catalog, entityName); 
+    }
+
+    function openTab(evt, tabInfo) {
+      // Declare all variables
+      var i, tabcontent, tablinks;
+
+      // Get all elements with class="tabcontent" and hide them
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+
+      // Get all elements with class="tablinks" and remove the class "active"
+      tablinks = document.getElementsByClassName("tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+
+      // Show the current tab, and add an "active" class to the button that opened the tab
+      document.getElementById(tabInfo).style.display = "block";
+      evt.currentTarget.className += " active";
+    }
+    
+    window.onload = loadCatalogs; 
     </script>
   </head>
   <body>
-    <p>Choose a Catalog to Display:</p>
+    <div class="back-btn-container">
+      <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
+    </div>
+   
+    <h1>Choose a Catalog to Display:</h1>
+    <input type="text" id="searchInput" onkeyup="filterCatalogs()" placeholder="Search catalogs...">
+
     <ul id = "catalogList">
       <li id="addEntity" onclick="showAddEntity()">Add an Entity</li>
-      <li id="backToLanding" onclick="navigateTo('LandingPage')">Go Back</li>
     </ul>
 
-    <div id="addEntityModal" class="modal">
-      <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
+    <div id="addEntityModal" class="modal-container">
+      <div class="modal-popup">
+        <span class="close" onclick="closeModal('addEntityModal')">&times;</span>
         <h2>Add a New Entity</h2>
 
         <label for="catalogDropdown">Select Catalog:</label>
@@ -269,13 +341,13 @@
         <br><br>
 
         <button onclick="submitNewEntity()">Add Entity</button>
-        <button onclick="closeModal()">Cancel</button>
+        <button onclick="closeModal('addEntityModal')">Cancel</button>
       </div>
     </div>
 
-    <div id="showEntityModal" class="modal">
-      <div class="modal-content">
-        <span class="close" onclick="closeUpdateModal()">&times;</span>
+    <div id="showEntityModal" class="modal-container">
+      <div class="modal-popup">
+        <span class="close" onclick="closeModal('showEntityModal')">&times;</span>
         <h2>Add a New Entity</h2>
 
         <label for="fieldDropdown">Select Catalog:</label>
@@ -289,7 +361,45 @@
         <br><br>
 
         <button onclick="updateEntity()">Update Entity</button>
-        <button onclick="closeUpdateModal()">Cancel</button>
+        <button onclick="closeModal('showEntityModal')">Cancel</button>
+      </div>
+    </div>
+
+    <div id="viewEntityModal" class="modal-container">
+      <div class="modal-popup">
+        <div class="modal-content">
+          <h2 class="character-name" id="viewEntityName" style="font-weight: bold;"></h2>
+          <p class="close" onclick="closeModal('viewEntityModal')">&times;</p>
+          
+
+          <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'Attributes')">Attributes</button>
+            <button class="tablinks" onclick="openTab(event, 'Graphs')">Graphs</button>
+            <button class="tablinks" onclick="openTab(event, 'Occurences')">Occurences</button>
+            <button class="tablinks" onclick="openTab(event, 'Summary')">Summary</button>
+            <button class="tablinks" onclick="openTab(event, 'Relationships')">Relationships</button>
+          </div>
+
+          <div id="Attributes" class="tabcontent">
+            <ul class="character-information" id="entityAttributesList"></ul>
+          </div>
+
+          <div id="Graphs" class="tabcontent">
+            <p>placeholder text</p>
+          </div>
+
+          <div id="Occurences" class="tabcontent">
+            <ul class="character-information" id="entityOccurencesList"></ul>
+          </div>
+
+          <div id="Summary" class="tabcontent">
+            <p>placeholder text</p>
+          </div>
+
+          <div id="Relationships" class="tabcontent">
+            <p>placeholder text</p>
+          </div>
+        </div>
       </div>
     </div>
 

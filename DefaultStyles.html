@@ -1,0 +1,212 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Macondo+Swash+Caps&family=Nanum+Gothic&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap');
+
+  // FONTS
+  html {
+    font-size: 18px;
+  }
+
+  // default font
+  .nanum-gothic-regular {
+    font-family: "Nanum Gothic", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  // only used for 'LORE' on landing page
+  .macondo-regular {
+    font-family: "Macondo", cursive;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  .macondo-swash-caps-regular {
+    font-family: "Macondo Swash Caps", cursive;
+    font-style: normal;
+  }
+
+  .page {
+    overflow: auto;
+  }
+
+  body {
+    font-family: 'DM Serif Display', serif;
+    text-align: center;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+
+  h0 {
+    font-family: "Macondo Swash Caps";
+    text-align: center;
+    color: #3c4a3e;
+    font-size: 96px;
+    margin: 0;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: bold;
+    color: #3c4a3e;
+    margin-top: 5px;
+  }
+
+  h2 {
+    font-size: 30px;
+    font-weight: bold;
+    color: #3c4a3e;
+    margin-top: 5px;
+  }
+
+  p {
+    font-size: 14px;
+    color: #3c4a3e;
+  }
+
+  .continue-btn {
+    margin-top: 20px;
+    background-color: #95b1ee;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  .continue-btn:hover {
+    background-color: #95b1ee;
+  }
+
+  .back-btn {
+    background-color: #9fafa1;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin: 10px;
+    text-decoration: none;
+  }
+
+  .back-btn:hover {
+    background-color: #839b91;
+  }
+
+  .back-btn-container {
+    height: 60px;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .option {
+    width: 60%;
+    max-width: 300px;
+    background-color: #9fafa1;
+    color: white;
+    padding: 15px;
+    margin: 10px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: block;
+  }
+
+  .option:hover {
+    background-color: #839b91;
+  }
+
+  // handles how pop ups (modals) are displayed
+  .modal-container {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+
+  .modal-popup {
+    background-color: white;
+    border: 1px solid #888;
+    width: 95%;
+    height: 75%;
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+  }
+
+  .modal-content {
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+
+  .sidebar-container {
+    overflow: hidden;
+  }
+
+  #top-text-block {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 35px;
+  }
+
+  #bottom-text-block {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 30px;
+  }
+
+  .close {
+    color: red;
+    margin-left: auto;
+    font-size: 28px;
+    cursor: pointer;
+    position: absolute;
+    z-index: 2;
+    right: 15px;
+    text-align: center;
+    display: inline-block;
+    padding: 0;
+    margin-bottom: 0;
+    margin-top: 5px;
+  }
+
+  .close:hover {
+    color: darkred;
+  }
+
+  select, input, button {
+    margin-top: 10px;
+    padding: 5px;
+    font-size: 16px;
+    width: 100%; /* Make inputs fit inside modal */
+    max-width: 350px; /* Prevents them from overflowing */
+    box-sizing: border-box; /* Prevents width issues */
+  }
+  
+</style>
+

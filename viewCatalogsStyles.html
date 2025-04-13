@@ -1,142 +1,158 @@
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        margin: 20px;
-        background-color: #f4f4f4;
-    }
-  
-    /* Main Category List */
-    #catalogList {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        list-style: none;
-        padding: 0;
-        margin: 20px 0;
-        width: 100%;
-    }
-  
-    /* Category Buttons */
-    #catalogList > li {
-        display: flex; /* Enables flex inside the category */
-        flex-direction: column; /* Stack content inside each category */
-        align-items: center; /* Center the text */
-        justify-content: center;
-        min-width: 250px; 
-        max-width: 80%;
-        background-color: #3498db;
-        color: white;
-        padding: 15px;
-        margin: 5px;
-        text-align: center;
-        cursor: pointer;
-        border-radius: 8px;
-        transition: background-color 0.3s ease;
-        word-wrap: break-word;
-        position: relative; /* Ensures the sublist stays inside */
-        overflow: hidden; /*Prevents overflow */
-    }
-  
-    #catalogList li:hover {
-        background-color: #2980b9;
-    }
-  
-    /* Expandable Sublist */
-    #catalogList li > ul {
-        display: flex; /*Makes sublist a flex container */
-        flex-direction: column; /*Stack sublist items */
-        align-items: center; /*Ensures sublist stays aligned */
-        justify-content: center;
-        list-style: none;
-        padding: 10px;
-        margin: 5px 0 0 0;
-        width: 100%; /*Matches the width of the category button */
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        display: none; /* Initially hidden */
-        position: relative; /*Keeps it inside the parent */
-        overflow: hidden; /* Prevents extra background from expanding */
-    }
-  
-    /* Items Inside Expanded Category */
-    #catalogList ul li {
-        background-color: white;
-        color: black;
-        padding: 8px;
-        border-bottom: 1px solid #ddd;
-        text-align: center;
-        width: 100%; /*Ensures text stays inside the box */
-        box-sizing: border-box; /*Prevents overflow due to padding */
-        white-space: nowrap; /*Keeps text on one line (adjust as needed) */
-        overflow: hidden; /*Hides text overflow */
-        text-overflow: ellipsis; /*Adds "..." if text is too long */
-    }
-  
-    #catalogList ul li:last-child {
-        border-bottom: none;
-    }
-  
-    #backToLanding {
-      background-color: #e74c3c; /* Red for visibility */
+  /* Main Category List */
+  #catalogList {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+      width: 100%;
+  }
+
+  /* Category Buttons */
+  #catalogList > li {
+      display: flex; /* Enables flex inside the category */
+      flex-direction: column; /* Stack content inside each category */
+      align-items: center; /* Center the text */
+      justify-content: center;
+      min-width: 250px; 
+      max-width: 80%;
+      background-color: #9fafa1;
       color: white;
       padding: 15px;
-      margin-top: 10px;
+      margin: 5px;
       text-align: center;
       cursor: pointer;
       border-radius: 8px;
-      font-weight: bold;
       transition: background-color 0.3s ease;
-      width: 100%;
-      max-width: 80%;
+      word-wrap: break-word;
+      position: relative; /* Ensures the sublist stays inside */
+      overflow: hidden; /*Prevents overflow */
+  }
+
+  #catalogList li:hover {
+    background-color: #839b91;
+  }
+
+  .character-name {
+    font-size: 30px;
+    text-align: center;
+    display: inline-block;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin-right: auto;
+    margin-left: auto;
+    margin-bottom: 10px;
+    margin-top: 20px;
+    position: relative;
+  }
+
+  .character-information {
+    list-style: none;
+    padding: 0;
+    margin: 10px;
+    text-align: left;
+  }
+
+  /* Expandable Sublist */
+  #catalogList li > ul {
+      display: flex; /*Makes sublist a flex container */
+      flex-direction: column; /*Stack sublist items */
+      align-items: center; /*Ensures sublist stays aligned */
+      justify-content: center;
+      list-style: none;
+      padding: 10px;
+      margin: 5px 0 0 0;
+      width: 100%; /*Matches the width of the category button */
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      display: none; /* Initially hidden */
+      position: relative; /*Keeps it inside the parent */
+      overflow: hidden; /* Prevents extra background from expanding */
+  }
+
+  /* Items Inside Expanded Category */
+  #catalogList ul li {
+      background-color: white;
+      color: black;
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+      width: 100%; /*Ensures text stays inside the box */
+      box-sizing: border-box; /*Prevents overflow due to padding */
+      white-space: nowrap; /*Keeps text on one line (adjust as needed) */
+      overflow: hidden; /*Hides text overflow */
+      text-overflow: ellipsis; /*Adds "..." if text is too long */
+  }
+
+  #catalogList ul li:last-child {
+    border-bottom: none;
+  }
+
+  #backToLanding {
+    background-color: #9fafa1;
+    color: white;
+    padding: 15px;
+    margin-top: 10px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    max-width: 80%;
   }
   
   #backToLanding:hover {
-      background-color: #c0392b; /* Darker red on hover */
+      background-color: #839b91;
   }
 
-  .modal {
-        display: none;
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
-      }
+  #searchInput {
+    margin: 0 auto;
+    padding: 12px;
+    width: 95%; 
+    font-size: 16px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+    border: 2px solid #9fafa1; 
+  }
 
-      .modal-content {
-        background-color: white;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 50%;
-        text-align: center;
-        max-width: 400px;
-      }
+  .tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+  }
 
-      .close {
-        color: red;
-        float: right;
-        font-size: 28px;
-        cursor: pointer;
-      }
+  .tab button {
+    background-color: inherit;
+    border: none;
+    margin-top: 0;
+    width: auto;
+    float: left;
+    outline: none;
+    cursor: pointer;
+    padding: 10px 10px;
+    transition: 0.3s;
+  }
 
-      .close:hover {
-        color: darkred;
-      }
+  .tab button:hover {
+    background-color: #ddd;
+  }
 
-      select, input, button {
-        margin-top: 10px;
-        padding: 5px;
-        font-size: 16px;
-        width: 100%; /* Make inputs fit inside modal */
-        max-width: 350px; /* Prevents them from overflowing */
-        box-sizing: border-box; /* Prevents width issues */
-      }
+  .tab button.active {
+    background-color: #ccc;
+  }
 
-  
-  </style>
+  .tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+  }
+
+</style>
   

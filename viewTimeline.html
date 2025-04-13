@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('defaultStyles'); ?>
+
+    <style>
+      body {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="back-btn-container">
+      <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
+    </div>
+
+    <script>
+      function navigateTo(page) {
+        google.script.run.showPage(page);
+      }
+
+      function adjustPageHeight() {
+        let sidebar = document.getElementById('sidebar');
+        let sidebarHeight = sidebar.clientHeight;
+      }
+
+      window.addEventListener('load', adjustPageHeight);
+      window.addEventListener('resize', adjustPageHeight);
+    </script>
+  </body>
+</html>
