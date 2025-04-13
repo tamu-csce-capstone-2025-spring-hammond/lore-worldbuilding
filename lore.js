@@ -217,44 +217,11 @@ function deleteCatalogEntity(catalog, entity){
 function addCatalogEntity(catalog, entityName) {
   var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
 
-  // Base fields
-  var fields = {
-    Name: { stringValue: entityName }
+  var payload = {
+    fields: {
+      Name: { stringValue: entityName } 
+    }
   };
-
-  // Add catalog-specific fields
-  if (catalog === "Characters") {
-    Object.assign(fields, {
-      Aliases: { arrayValue: { values: [] } },
-      Age: { integerValue: 0 },
-      Nationality: { stringValue: "" },
-      Gender: { stringValue: "" },
-      HairColor: { stringValue: "" },
-      EyeColor: { stringValue: "" },
-      Height: { stringValue: "" },
-      Weight: { stringValue: "" },
-      SkinColor: { stringValue: "" },
-      Build: { stringValue: "" },
-      DistinctFeatures: { arrayValue: { values: [] } },
-      Accessories: { arrayValue: { values: [] } }
-    });
-  } else if (catalog === "Events") {
-    Object.assign(fields, {
-      Date: { stringValue: "" }, // You can change to timestampValue later
-      Location: { stringValue: "" },
-      AssociatedCharacters: { arrayValue: { values: [] } },
-      Description: { stringValue: "" }
-    });
-  } else if (catalog === "Locations") {
-    Object.assign(fields, {
-      Terrain: { stringValue: "" },
-      Description: { stringValue: "" },
-      AssociatedCharacters: { arrayValue: { values: [] } },
-      AssociatedEvents: { arrayValue: { values: [] } }
-    });
-  }
-
-  var payload = { fields: fields };
 
   var options = {
     method: "patch",
@@ -267,10 +234,6 @@ function addCatalogEntity(catalog, entityName) {
 
   var response = UrlFetchApp.fetch(url, options);
   var statusCode = response.getResponseCode();
-
-  Logger.log("Created entity in: " + catalog + " with name: " + entityName);
-  Logger.log("Response: " + statusCode);
-
   return statusCode === 200 || statusCode === 201;
 }
 
@@ -278,13 +241,6 @@ function addCatalogEntity(catalog, entityName) {
 //Update Function
 function updateCatalogEntity(collection, documentId, updateData) {
   var url = FIREBASE_URL + collection + "/" + encodeURIComponent(documentId);
-
-
-  // Build update mask string (comma-separated field names)
-  var updateMask = Object.keys(updateData).join(",");
-
-  // Add updateMask to URL as query param
-  url += "?updateMask.fieldPaths=" + encodeURIComponent(updateMask);
 
   var payload = {
     fields: updateData  // Firestore expects fields in this format
@@ -310,8 +266,6 @@ function updateCatalogEntity(collection, documentId, updateData) {
 
   return statusCode === 200 || statusCode === 201;
 }
-
-
 
 
 //get document fields
@@ -342,61 +296,6 @@ function getDocumentFields(collection, documentId) {
   }
 }
 
-function extractFirestoreValue(field) {
-  if (field.stringValue !== undefined) return field.stringValue;
-  if (field.integerValue !== undefined) return parseInt(field.integerValue);
-  if (field.doubleValue !== undefined) return parseFloat(field.doubleValue);
-  if (field.booleanValue !== undefined) return field.booleanValue;
-  if (field.arrayValue !== undefined) {
-    return (field.arrayValue.values || []).map(extractFirestoreValue);
-  }
-  if (field.mapValue !== undefined) {
-    var result = {};
-    for (var key in field.mapValue.fields) {
-      result[key] = extractFirestoreValue(field.mapValue.fields[key]);
-    }
-    return result;
-  }
-  if (field.nullValue !== undefined) return null;
-  return null;
-}
-
-function getCatalogEntity(catalog, entityName) {
-  var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
-
-  var options = {
-    method: "GET",
-    headers: {
-      Authorization: "Bearer " + getAccessToken(),
-      "Content-Type": "application/json"
-    },
-    muteHttpExceptions: true
-  };
-
-  var response = UrlFetchApp.fetch(url, options);
-  var statusCode = response.getResponseCode();
-
-  if (statusCode !== 200) {
-    Logger.log("Failed to get entity: " + entityName);
-    Logger.log("Response Code: " + statusCode);
-    Logger.log("Response Body: " + response.getContentText());
-    return null;
-  }
-
-  var document = JSON.parse(response.getContentText());
-  var fields = document.fields || {};
-
-  // Convert Firestore format into plain JavaScript values
-  var entityData = {};
-  for (var key in fields) {
-    entityData[key] = extractFirestoreValue(fields[key]);
-  }
-
-  Logger.log("Entity Data for " + entityName + ":");
-  Logger.log(JSON.stringify(entityData, null, 2));
-
-  return entityData;
-}
 
 function findProperNouns() {
   var doc = DocumentApp.getActiveDocument();
@@ -495,11 +394,6 @@ function findProperNouns2() {
   return uniqueProperNouns.size ? [...uniqueProperNouns] : ["No proper nouns found."];
 }
 
-// TODO: user prompt function
-// check if noun already exists in DB (character name or as an alias)
-// check that it's not already in the 'ignore' list
-// if not prompt user for noun type 'character' 'location' etc. or 'ignore'
-// if user chooses an object type, send to DB
 
 // Function to pass data to the sidebar
 function getProperNounsForSidebar() {
