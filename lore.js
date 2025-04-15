@@ -122,9 +122,19 @@ function findProperNouns() {
 }
 
 function getNewProperNouns(){
+  var userProperties = PropertiesService.getUserProperties();
   var all = findProperNouns();
-  var existing = [''];// get proper nouns from database
-  var newProperNouns = all.filter(word => !existing.includes(word));
+
+  // load existing entities
+  var existingRaw = userProperties.getProperty('existingEntities');
+  var existing = existingRaw ? JSON.parse(existingRaw) : [];
+  console.log(existing);
+  
+  // load ignored words
+  var ignoredRaw = userProperties.getProperty('ignoredEntities');
+  var ignored = ignoredRaw ? JSON.parse(ignoredRaw) : [];
+
+  var newProperNouns = all.filter(word => !existing.includes(word) && !ignored.includes(word));
 
   return newProperNouns;
 }

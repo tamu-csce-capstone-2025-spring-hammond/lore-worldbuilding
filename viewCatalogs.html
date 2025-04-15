@@ -91,9 +91,8 @@
         }
 
         google.script.run.withSuccessHandler(() => {
-          alert(`"${entityName}" has been deleted from "${catalog}".`);
           closeModal("viewEntityModal");
-          loadCatalogs(); // Refresh catalog list
+          loadCatalogs();
         }).deleteCatalogEntity(catalog, entityName);
       }
 
@@ -423,9 +422,9 @@
           
 
           <div class="tab">
-            <button class="tablinks" id="summaryButton" onclick="openTab(event, 'Summary')">Summary</button>
-            <button class="tablinks" onclick="openTab(event, 'Attributes')">Details</button>
-            <button class="tablinks" onclick="openTab(event, 'Graphs')">Graphs</button>
+            <button class="tablinks" id="summaryButton" onclick="openTab(event, 'Summary')">O</button>
+            <button class="tablinks" onclick="openTab(event, 'Attributes')">Info</button>
+            <button class="tablinks" onclick="openTab(event, 'Graphs')">Charts</button>
             <button class="tablinks" onclick="openTab(event, 'Occurences')">Occurences</button>
             <!-- <button class="tablinks" onclick="openTab(event, 'Relationships')">Relationships</button> -->
           </div>

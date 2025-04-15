@@ -36,3 +36,77 @@ function getActiveName() {
       Logger.log("No document is bound to this script.");
   }
 }
+
+function getAccentColor() {
+  var cache = CacheService.getUserCache();
+  var cachedColor = cache.get("accentColor");
+  console.log(cachedColor);
+
+  if (cachedColor) return cachedColor;
+
+  var userProperties = PropertiesService.getUserProperties();
+  var color = userProperties.getProperty("accentColor") || "#0000FF";
+  cache.put("accentColor", color, 21600);
+  return color;
+}
+
+function changeAccentColor(color, hovercolor){
+  var userProperties = PropertiesService.getUserProperties();
+  var cache = CacheService.getUserCache();
+
+  // store in PropertiesService (persistent storage)
+  userProperties.setProperty("accentColor", color);
+  userProperties.setProperty("accentColorHover", hovercolor);
+
+  // Store in CacheService (fast access)
+  cache.put("accentColor", color, 21600); 
+  cache.put("accentColorHover", hovercolor, 21600);
+}
+
+function changeFontSize(size){
+  var userProperties = PropertiesService.getUserProperties();
+  var cache = CacheService.getUserCache();
+
+  // store in PropertiesService (persistent storage)
+  userProperties.setProperty("fontsize", size);
+}
+
+function addIgnoredEntity(entityName) {
+  const userProperties = PropertiesService.getUserProperties();
+  const ignored = userProperties.getProperty('ignoredEntities');
+  
+  let ignoredArray = [];
+  if (ignored) {
+    ignoredArray = JSON.parse(ignored);
+  }
+
+  if (!ignoredArray.includes(entityName)) {
+    ignoredArray.push(entityName);
+    userProperties.setProperty('ignoredEntities', JSON.stringify(ignoredArray));
+  }
+
+  // return the updated list to the client
+  return ignoredArray;
+}
+
+function addExistingEntity(entityName) {
+  const userProperties = PropertiesService.getUserProperties();
+  const existing = userProperties.getProperty('existingEntities');
+  
+  let existingArray = [];
+  if (existing) {
+    existingArray = JSON.parse(ignored);
+  }
+
+  if (!existingArray.includes(entityName)) {
+    existingArray.push(entityName);
+    userProperties.setProperty('existingEntities', JSON.stringify(existingArray));
+  }
+
+  // return the updated list to the client
+  return existingArray;
+}
+
+
+
+

@@ -58,6 +58,7 @@ function deleteCatalogEntity(catalog, entity){
 // - catalog: "Characters", "Events", etc.
 // - entityName: Name of Entity
 function addCatalogEntity(catalog, entityName) {
+  addExistingEntity(entityName); // adds entity name to list of all entity names
   var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
 
   // Base fields that all collections share
