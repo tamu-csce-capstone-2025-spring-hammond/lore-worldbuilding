@@ -76,13 +76,25 @@
       }
 
       //Delete Entities
-      function deleteEntity(catalog, entity, listItem) {
-        let confirmDelete = confirm(`Are you sure you want to delete "${entity}" from ${catalog}?`);
-        if (!confirmDelete) return;
+      function deleteEntity() {
+        const modal = document.getElementById("viewEntityModal");
+        const entityName = modal.getAttribute("data-entity");
+        console.log("Deleting..." + entityName);
+
+        const catalog = modal.getAttribute("data-catalog");
+
+        console.log("Deleting..." + catalog);
+
+        if (!catalog || !entityName) {
+          alert("Missing catalog or entity information.");
+          return;
+        }
 
         google.script.run.withSuccessHandler(() => {
-          listItem.remove(); // Remove from UI
-        }).deleteCatalogEntity(catalog, entity);
+          alert(`"${entityName}" has been deleted from "${catalog}".`);
+          closeModal("viewEntityModal");
+          loadCatalogs(); // Refresh catalog list
+        }).deleteCatalogEntity(catalog, entityName);
       }
 
       //Adding Entities
@@ -215,6 +227,7 @@
         const occurrencesList = document.getElementById("entityOccurencesList");
 
         modal.setAttribute("data-entity", entityName);
+        modal.setAttribute("data-catalog", catalog);
 
         // nameDisplay.textContent = `Catalog: ${catalog} — ${entityName}`;
         nameDisplay.textContent = `${entityName}`;
@@ -419,7 +432,7 @@
 
           <div id="Summary" class="tabcontent">
             <p>placeholder text</p>
-            <button class="accent-btn" onclick="deleteCatalogEntity()" style="background-color: #c9807b"> Delete Entity </button>
+            <button class="accent-btn" onclick="deleteEntity()" style="background-color: #c9807b"> Delete Entity </button>
           </div>
 
           <div id="Attributes" class="tabcontent">
