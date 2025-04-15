@@ -1,4 +1,13 @@
 <style>
+
+  @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
+
+  button {
+    font-family: 'DM Serif Display', serif;
+    color: #ffffff;
+  }
+
   /* Main Category List */
   #catalogList {
       display: flex;
@@ -54,6 +63,15 @@
     padding: 0;
     margin: 10px;
     text-align: left;
+    color: #3c4a3e;
+  }
+
+  ul {
+    color: #3c4a3e;
+  }
+
+  li {
+    margin-bottom: 5px;
   }
 
   /* Expandable Sublist */
@@ -86,6 +104,7 @@
       white-space: nowrap; /*Keeps text on one line (adjust as needed) */
       overflow: hidden; /*Hides text overflow */
       text-overflow: ellipsis; /*Adds "..." if text is too long */
+      color: #3c4a3e;
   }
 
   #catalogList ul li:last-child {
@@ -123,35 +142,47 @@
 
   .tab {
     overflow: hidden;
-    border: 1px solid #ccc;
-    background-color: #f1f1f1;
+    background-color: #ffffff;
+    width: 91.7vw;
+    display: flex;
   }
 
   .tab button {
     background-color: inherit;
     border: none;
-    margin-top: 0;
+    margin: 0;
     width: auto;
     float: left;
     outline: none;
     cursor: pointer;
-    padding: 10px 10px;
+    padding: 10px 11px;
     transition: 0.3s;
+    background-color: #9fafa1;
+    border-radius: 10px 10px 0 0;
+    flex: 1;
   }
 
   .tab button:hover {
-    background-color: #ddd;
+    background-color: #839b91;
   }
 
   .tab button.active {
-    background-color: #ccc;
+    background-color: #839b91;
   }
 
   .tabcontent {
     display: none;
     padding: 6px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid #839b91;
     border-top: none;
+  }
+
+  .accent-btn {
+    border: none;
+    cursor: pointer;
+    margin: 10px;
+    border-radius: 5px; 
+    display: inline-block;
   }
 
 </style>

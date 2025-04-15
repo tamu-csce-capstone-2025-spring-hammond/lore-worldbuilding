@@ -1,3 +1,16 @@
+
+// gets personality trait of a character
+function getRadarData(entityName) {
+  Logger.log("Retrieving radar data for ");
+  console.log(entityName);
+  // Assuming you use getCatalogEntity to fetch the data and then extract traits:
+  var entityData = getCatalogEntity("Characters", entityName);
+  if (entityData && entityData.PersonalityTraits) {
+    return entityData.PersonalityTraits;
+  }
+  return {};
+}
+
 //Delete Entities
 function deleteEntity(catalog, entity, listItem) {
   let confirmDelete = confirm(`Are you sure you want to delete "${entity}" from ${catalog}?`);
@@ -155,7 +168,7 @@ function updateCatalogEntity(collection, documentId, updateData) {
 
   const originalUrl = FIREBASE_URL + collection + "/" + encodeURIComponent(documentId);
 
-  // Check if name is being updated (implies renaming the document ID)
+  //Check if name is being updated (implies renaming the document ID)
   const newName = updateData.Name?.stringValue;
   const isRename = newName && newName !== documentId;
 
@@ -209,6 +222,7 @@ function updateCatalogEntity(collection, documentId, updateData) {
   // Standard update (no rename)
   const updateMask = Object.keys(updateData).join(",");
   const updateUrl = originalUrl + "?updateMask.fieldPaths=" + encodeURIComponent(updateMask);
+
 
   const patchOptions = {
     method: "PATCH",
@@ -302,6 +316,47 @@ function getCatalogEntity(catalog, entityName) {
   Logger.log(JSON.stringify(entityData, null, 2));
 
   return entityData;
+}
+
+//Function to GET a specific attribute of an entity
+//Parameters:
+// - catalog: "Characters", "Events", etc.
+// - entityName: current name (used as document ID)
+// - attribute: the attribute name needed (PersonalityTraits)
+function getEntityAttribute(catalog, entityName, attribute) {
+  //catalog = 'Characters';
+  //entityName = 'test2';
+  //attribute = 'PersonalityTraits';
+  var url = FIREBASE_URL + catalog + "/" + 
+  encodeURIComponent(entityName);
+
+  var options = {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer " + getAccessToken(),
+      "Content-Type": "application/json"
+    },
+    muteHttpExceptions: true
+  };
+
+  var response = UrlFetchApp.fetch(url, options);
+  var statusCode = response.getResponseCode();
+
+  if (statusCode !== 200) {
+    Logger.log("Failed to get entity: " + entityName);
+    Logger.log("Response Code: " + statusCode);
+    Logger.log("Response Body: " + response.getContentText());
+    return null;
+  }
+
+  var document = JSON.parse(response.getContentText());
+
+  // Firestore stores fields under 'fields' and uses type wrappers (e.g., integerValue)
+  if (document.fields && document.fields[attribute]) {
+    var value = Object.values(document.fields[attribute])[0];
+    Logger.log(value);
+    return value;
+  }
 }
 
 //Function to ADD where characters appear

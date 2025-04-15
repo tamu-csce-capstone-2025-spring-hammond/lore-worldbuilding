@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <?!= include('viewCatalogsStyles'); ?>
     <?!= include('defaultStyles'); ?>
@@ -213,6 +214,8 @@
         const attributesList = document.getElementById("entityAttributesList");
         const occurrencesList = document.getElementById("entityOccurencesList");
 
+        modal.setAttribute("data-entity", entityName);
+
         // nameDisplay.textContent = `Catalog: ${catalog} — ${entityName}`;
         nameDisplay.textContent = `${entityName}`;
 
@@ -290,6 +293,7 @@
     }
 
     function openTab(evt, tabInfo) {
+      console.log("Switching to " + tabInfo);
       // Declare all variables
       var i, tabcontent, tablinks;
 
@@ -308,11 +312,44 @@
       // Show the current tab, and add an "active" class to the button that opened the tab
       document.getElementById(tabInfo).style.display = "block";
       evt.currentTarget.className += " active";
+
+      // If the Graphs tab is opened, get the radar chart data and render the chart
+      if (tabInfo == 'Graphs') {
+        const modal = document.getElementById("viewEntityModal");
+        const entityName = modal.getAttribute("data-entity");
+        if (entityName) {
+          console.log("Rendering chart of... " + entityName);
+          loadRadarChart(entityName);
+        } else {
+          console.error("Entity name not set in the modal data attribute");
+        }
+      }
+    }
+
+    function loadRadarChart(entityName) {
+      // Log the passed entityName for debugging
+      console.log("Calling getRadarData for:", entityName);
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          console.log("Radar data received:", data);
+          renderChart(data);
+        })
+        .withFailureHandler(function(error) {
+          console.error("Error calling getRadarData:", error);
+        })
+        .getEntityAttribute('Characters', entityName, 'PersonalityTraits');
     }
     
     window.onload = loadCatalogs; 
+
+    // summary tab is open upon loading up a character
+    document.addEventListener("DOMContentLoaded", function(event) { 
+      document.getElementById("summaryButton").click();
+    });
     </script>
   </head>
+
   <body>
     <div class="back-btn-container">
       <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
@@ -373,11 +410,16 @@
           
 
           <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'Attributes')">Attributes</button>
+            <button class="tablinks" id="summaryButton" onclick="openTab(event, 'Summary')">Summary</button>
+            <button class="tablinks" onclick="openTab(event, 'Attributes')">Details</button>
             <button class="tablinks" onclick="openTab(event, 'Graphs')">Graphs</button>
             <button class="tablinks" onclick="openTab(event, 'Occurences')">Occurences</button>
-            <button class="tablinks" onclick="openTab(event, 'Summary')">Summary</button>
-            <button class="tablinks" onclick="openTab(event, 'Relationships')">Relationships</button>
+            <!-- <button class="tablinks" onclick="openTab(event, 'Relationships')">Relationships</button> -->
+          </div>
+
+          <div id="Summary" class="tabcontent">
+            <p>placeholder text</p>
+            <button class="accent-btn" onclick="deleteCatalogEntity()" style="background-color: #c9807b"> Delete Entity </button>
           </div>
 
           <div id="Attributes" class="tabcontent">
@@ -385,23 +427,63 @@
           </div>
 
           <div id="Graphs" class="tabcontent">
-            <p>placeholder text</p>
-          </div>
+            <canvas id="radarChart"></canvas>
+          </div> 
 
           <div id="Occurences" class="tabcontent">
             <ul class="character-information" id="entityOccurencesList"></ul>
           </div>
 
-          <div id="Summary" class="tabcontent">
-            <p>placeholder text</p>
-          </div>
-
-          <div id="Relationships" class="tabcontent">
-            <p>placeholder text</p>
-          </div>
         </div>
       </div>
     </div>
+
+    <script>
+      function renderChart(data) {
+        console.log("Radar chart data received:", data.fields);
+        const data2 = data.fields;
+        const labels = [];
+        const values = [];
+
+        for (const trait in data2) {
+          if (data2.hasOwnProperty(trait)) {
+            labels.push(trait);
+            values.push(parseInt(data2[trait].integerValue));
+          }
+        }
+        
+        // Clear any previous chart instance (optional, if needed)
+        const canvas = document.getElementById('radarChart');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Personality Traits',
+              data: values,
+              fill: true,
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              borderColor: 'rgba(54, 162, 235, 1)',
+              pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+            }]
+          },
+          options: {
+            scales: {
+              r: {
+                beginAtZero: true,
+                min: 0,
+                max: 100
+              }
+            }
+          }
+        });
+      }
+    </script>
+
+
 
     <script>
     function navigateTo(page) {
