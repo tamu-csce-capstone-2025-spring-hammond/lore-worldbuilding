@@ -1,23 +1,7 @@
-// gets the personality traits of a character
-function getPersonalityTraitValues(characterName) {
-  var entityData = getCatalogEntity("Characters", characterName);
-  if (!entityData || !entityData.PersonalityTraits) {
-    Logger.log("No personality traits found.");
-    return null;
-  }
 
-  const traits = entityData.PersonalityTraits;
-  const result = {};
-
-  for (let trait in traits) {
-    result[trait] = traits[trait];
-  }
-
-  return result;
-}
-
+// gets personality trait of a character
 function getRadarData(entityName) {
-  console.log("Retrieving radar data for ");
+  Logger.log("Retrieving radar data for ");
   console.log(entityName);
   // Assuming you use getCatalogEntity to fetch the data and then extract traits:
   var entityData = getCatalogEntity("Characters", entityName);
@@ -331,6 +315,47 @@ function getCatalogEntity(catalog, entityName) {
   Logger.log(JSON.stringify(entityData, null, 2));
 
   return entityData;
+}
+
+//Function to GET a specific attribute of an entity
+//Parameters:
+// - catalog: "Characters", "Events", etc.
+// - entityName: current name (used as document ID)
+// - attribute: the attribute name needed (PersonalityTraits)
+function getEntityAttribute(catalog, entityName, attribute) {
+  //catalog = 'Characters';
+  //entityName = 'test2';
+  //attribute = 'PersonalityTraits';
+  var url = FIREBASE_URL + catalog + "/" + 
+  encodeURIComponent(entityName);
+
+  var options = {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer " + getAccessToken(),
+      "Content-Type": "application/json"
+    },
+    muteHttpExceptions: true
+  };
+
+  var response = UrlFetchApp.fetch(url, options);
+  var statusCode = response.getResponseCode();
+
+  if (statusCode !== 200) {
+    Logger.log("Failed to get entity: " + entityName);
+    Logger.log("Response Code: " + statusCode);
+    Logger.log("Response Body: " + response.getContentText());
+    return null;
+  }
+
+  var document = JSON.parse(response.getContentText());
+
+  // Firestore stores fields under 'fields' and uses type wrappers (e.g., integerValue)
+  if (document.fields && document.fields[attribute]) {
+    var value = Object.values(document.fields[attribute])[0];
+    Logger.log(value);
+    return value;
+  }
 }
 
 //Function to ADD where characters appear

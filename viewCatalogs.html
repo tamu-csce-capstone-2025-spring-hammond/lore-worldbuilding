@@ -338,7 +338,7 @@
         .withFailureHandler(function(error) {
           console.error("Error calling getRadarData:", error);
         })
-        .getRadarData(entityName);
+        .getEntityAttribute('Characters', entityName, 'PersonalityTraits');
     }
     
     window.onload = loadCatalogs; 
@@ -419,6 +419,7 @@
 
           <div id="Summary" class="tabcontent">
             <p>placeholder text</p>
+            <button class="accent-btn" onclick="deleteCatalogEntity()" style="background-color: #c9807b"> Delete Entity </button>
           </div>
 
           <div id="Attributes" class="tabcontent">
@@ -433,18 +434,23 @@
             <ul class="character-information" id="entityOccurencesList"></ul>
           </div>
 
-          <!-- <div id="Relationships" class="tabcontent">
-            <p>placeholder text</p>
-          </div> -->
         </div>
       </div>
     </div>
 
     <script>
       function renderChart(data) {
-        console.log("Radar chart data received:", data);
-        const labels = Object.keys(data);
-        const values = Object.values(data);
+        console.log("Radar chart data received:", data.fields);
+        const data2 = data.fields;
+        const labels = [];
+        const values = [];
+
+        for (const trait in data2) {
+          if (data2.hasOwnProperty(trait)) {
+            labels.push(trait);
+            values.push(parseInt(data2[trait].integerValue));
+          }
+        }
         
         // Clear any previous chart instance (optional, if needed)
         const canvas = document.getElementById('radarChart');
@@ -476,7 +482,6 @@
         });
       }
     </script>
-
 
 
 
