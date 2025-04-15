@@ -223,6 +223,7 @@ function updateCatalogEntity(collection, documentId, updateData) {
   const updateMask = Object.keys(updateData).join(",");
   const updateUrl = originalUrl + "?updateMask.fieldPaths=" + encodeURIComponent(updateMask);
 
+
   const patchOptions = {
     method: "PATCH",
     headers: headers,
@@ -365,7 +366,6 @@ function getEntityAttribute(catalog, entityName, attribute) {
 // - page: string of page entity appears
 // - excerpt: string of excerpt from writing
 function logNarrativeMention(catalog, entityName, page, excerpt) {
-  //Example parameters:
   //catalog = "Characters";
   //entityName = "test2";
   //page = "1";
@@ -421,10 +421,9 @@ function logNarrativeMention(catalog, entityName, page, excerpt) {
 //Parameters:
 // - catalog: "Characters", "Events", etc.
 // - entityName: current name (used as document ID)
-// - index: the index of the narrative mention (String!)
+// - index: the index of the narrative mention (string!)
 // - UpdatedExcerpt: new string of excerpt from writing
 function updateNarrativeMention(catalog, entityName, index, updatedExcerpt) {
-  //Example parameters:
   //catalog = "Characters";
   //entityName = "test2";
   //index = "0";
@@ -471,7 +470,6 @@ function updateNarrativeMention(catalog, entityName, index, updatedExcerpt) {
 // - entityName: current name (used as document ID)
 // - index: the index of the narrative mention (String!)
 function deleteNarrativeMention(catalog, entityName, indexToRemove) {
-  //Example parameters:
   //catalog = "Characters";
   //entityName = "test2";
   //indexToRemove = "0";
