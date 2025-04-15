@@ -36,3 +36,36 @@ function getActiveName() {
       Logger.log("No document is bound to this script.");
   }
 }
+
+function getAccentColor() {
+  var cache = CacheService.getUserCache();
+  var cachedColor = cache.get("accentColor");
+
+  if (cachedColor) return cachedColor;
+
+  var userProperties = PropertiesService.getUserProperties();
+  var color = userProperties.getProperty("accentColor") || "#0000FF";
+  cache.put("accentColor", color, 21600);
+  return color;
+}
+
+function changeAccentColor(color, hovercolor){
+  var userProperties = PropertiesService.getUserProperties();
+  var cache = CacheService.getUserCache();
+
+  // store in PropertiesService (persistent storage)
+  userProperties.setProperty("accentColor", color);
+  userProperties.setProperty("accentColorHover", hovercolor);
+
+  // Store in CacheService (fast access)
+  cache.put("accentColor", color, 21600); 
+  cache.put("accentColorHover", hovercolor, 21600);
+}
+
+function changeFontSize(size){
+  var userProperties = PropertiesService.getUserProperties();
+  var cache = CacheService.getUserCache();
+
+  // store in PropertiesService (persistent storage)
+  userProperties.setProperty("fontsize", size);
+}

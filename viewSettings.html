@@ -14,19 +14,19 @@
     <h1>Accent Color:</h1>
     <div class="button-container">
       <!-- Button 1: green -->
-      <button class="accent-btn" style="background-color: #64b579" onclick="changeAccentColor('#64b579')"> </button>
+      <button class="accent-btn" style="background-color: #64b579" onclick="saveColor('#64b579', '#64b579')"> </button>
 
       <!-- Button 2 blue -->
-      <button class="accent-btn" style="background-color: #8dafb8" onclick="changeAccentColor('#8dafb8')"> </button>
+      <button class="accent-btn" style="background-color: #8dafb8" onclick="saveColor('#8dafb8', '#8dafb8')"> </button>
 
       <!-- Button 3 red --> 
-      <button class="accent-btn" style="background-color: #c9807b" onclick="changeAccentColor('#c9807b')"> </button>
+      <button class="accent-btn" style="background-color: #c9807b" onclick="saveColor('#c9807b', '#c9807b')"> </button>
 
       <!-- Button 4 yellow-->
-      <button class="accent-btn" style="background-color: #e8db7b" onclick="changeAccentColor('#e8db7b')"> </button>
+      <button class="accent-btn" style="background-color: #e8db7b" onclick="saveColor('#e8db7b', '#e8db7b')"> </button>
 
       <!-- Button 5 purple-->
-      <button class="accent-btn" style="background-color: #a28db8" onclick="changeAccentColor('#a28db8')"> </button>
+      <button class="accent-btn" style="background-color: #a28db8" onclick="saveColor('#a28db8', '#a28db8')"> </button>
     </div>
 
     <h1> Sort Entities By: </h1>
@@ -36,25 +36,35 @@
       <option value="catalog3">Newest Entities</option>
     </select>
 
+    <!--
     <h1> Add New Entity Type: </h1>
     <div class="input-container">
       <input type="text" id="newInput" placeholder="Enter something...">
       <button id="addButton" onclick="addItem()">+</button>
     </div>
+    -->
 
     <h1> Font Size: </h1>
     <div class="button-container">
       <!-- Button 1: green -->
-      <button class="accent-btn" style="font-size: 16px"> aA </button>
+      <button class="accent-btn" style="font-size: 16px" onClick="changeFontSize(16)"> aA </button>
 
       <!-- Button 2 blue -->
-      <button class="accent-btn" style="font-size: 24px"> aA </button>
+      <button class="accent-btn" style="font-size: 24px" onClick="changeFontSize(24)"> aA </button>
 
       <!-- Button 3 red --> 
-      <button class="accent-btn" style="font-size: 32px"> aA </button>
+      <button class="accent-btn" style="font-size: 32px" onClick="changeFontSize(32)"> aA </button>
     </div>
 
     <script>
+      function saveColor(color, accentcolor) {
+        // This is how you call a server-side function
+        console.log("Changing to color " + color);
+        google.script.run
+          .withSuccessHandler()
+          .changeAccentColor(color, accentcolor);
+      }
+
       function navigateTo(page) {
         google.script.run.showPage(page);
       }

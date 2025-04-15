@@ -9,28 +9,8 @@
     <div id="top-text-block">
       <h0>LORE</h0>
     </div>
-    <div id="intro-block">
-    
-    </div>
-    <!-- add intro message here if track open count is less than a number (i.e. 10) -->
-    <!-- <script>
-    google.script.run.withSuccessHandler(function(count) {
-      if (count < 100) {
-        console.log("Open count is" + count);
-        let introMessage = `
-          <p>This tool helps you build immersive worlds for your stories, games, and projects.
-          Follow the instructions below to get started.</p>
-          <p>
-            1. Explore the sidebar tools to generate and organize your worldbuilding ideas.<br>
-            2. Use the built-in features to track lore, characters, and settings.<br>
-            3. Click "Continue" to access the full toolset.
-          </p>`;
-        
-        document.getElementById('intro-block').insertAdjacentHTML('afterend', introMessage);
-      }
-    }).getOpenCount();
-    </script> -->
-    <a href="#" class="option" onclick="navigateTo('viewWritingMode')">View Writing Mode</a>
+
+    <a href="#" class="option" onclick="navigateTo('viewWritingMode')">Writing Mode</a>
     <a href="#" class="option" onclick="navigateTo('viewCatalogs')">View Catalogs</a>
     <!-- <a href="#" class="option" onclick="navigateTo('viewProperNouns')">Proper Nouns</a> -->
     <a href="#" class="option" onclick="navigateTo('viewTimeline')">Event Timeline</a>
@@ -41,20 +21,6 @@
     function navigateTo(page) {
       google.script.run.showPage(page);
     }
-
-    function adjustPageHeight() {
-      let sidebar = document.getElementById('container');
-      let pages = document.querySelectorAll('.option');
-
-      let sidebarHeight = sidebar.clientHeight;
-
-      pages.forEach(page => {
-          page.style.height = `${sidebarHeight}px`;
-      });
-    }
-
-    window.addEventListener('load', adjustPageHeight);
-    window.addEventListener('resize', adjustPageHeight);
   </script>
 </body>
 </html>
