@@ -455,9 +455,12 @@
         // Clear any previous chart instance (optional, if needed)
         const canvas = document.getElementById('radarChart');
         const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (canvas.chartInstance) {
+          canvas.chartInstance.destroy();
+        }
         
-        new Chart(ctx, {
+        canvas.chartInstance = new Chart(ctx, {
           type: 'radar',
           data: {
             labels: labels,
