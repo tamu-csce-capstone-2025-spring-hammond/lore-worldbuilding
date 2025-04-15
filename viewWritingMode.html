@@ -45,7 +45,7 @@
         btn2.onclick = function () {
           google.script.run
             .withSuccessHandler(() => {
-              wrapper.remove(); // remove the entire div after success
+              wrapper.remove(); 
             })
             .addCatalogEntity('Locations', entityName);
         };
@@ -55,14 +55,23 @@
         btn3.onclick = function () {
           google.script.run
             .withSuccessHandler(() => {
-              wrapper.remove(); // remove the entire div after success
+              wrapper.remove();
             })
             .addCatalogEntity('Events', entityName);
         };
 
         const btn4 = document.createElement('button');
         btn4.textContent = 'Ignore';
+        btn4.onclick = function () {
+          google.script.run
+            .withSuccessHandler((ignoredList) => {
+              console.log('Ignored entities:', ignoredList);
+              wrapper.remove();
+            })
+            .addIgnoredEntity(entityName);
+        };
 
+   
         buttonGroup.appendChild(btn1);
         buttonGroup.appendChild(btn2);
         buttonGroup.appendChild(btn3);

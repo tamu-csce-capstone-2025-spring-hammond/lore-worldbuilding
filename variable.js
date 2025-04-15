@@ -40,6 +40,7 @@ function getActiveName() {
 function getAccentColor() {
   var cache = CacheService.getUserCache();
   var cachedColor = cache.get("accentColor");
+  console.log(cachedColor);
 
   if (cachedColor) return cachedColor;
 
@@ -69,3 +70,43 @@ function changeFontSize(size){
   // store in PropertiesService (persistent storage)
   userProperties.setProperty("fontsize", size);
 }
+
+function addIgnoredEntity(entityName) {
+  const userProperties = PropertiesService.getUserProperties();
+  const ignored = userProperties.getProperty('ignoredEntities');
+  
+  let ignoredArray = [];
+  if (ignored) {
+    ignoredArray = JSON.parse(ignored);
+  }
+
+  if (!ignoredArray.includes(entityName)) {
+    ignoredArray.push(entityName);
+    userProperties.setProperty('ignoredEntities', JSON.stringify(ignoredArray));
+  }
+
+  // return the updated list to the client
+  return ignoredArray;
+}
+
+function addExistingEntity(entityName) {
+  const userProperties = PropertiesService.getUserProperties();
+  const existing = userProperties.getProperty('existingEntities');
+  
+  let existingArray = [];
+  if (existing) {
+    existingArray = JSON.parse(ignored);
+  }
+
+  if (!existingArray.includes(entityName)) {
+    existingArray.push(entityName);
+    userProperties.setProperty('existingEntities', JSON.stringify(existingArray));
+  }
+
+  // return the updated list to the client
+  return existingArray;
+}
+
+
+
+
