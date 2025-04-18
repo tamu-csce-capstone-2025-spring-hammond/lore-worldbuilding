@@ -4,10 +4,10 @@ function getFirestorePrivateKey() {
   return scriptProperties.getProperty('FIREBASE_PRIVATE_KEY');
 }
 
-const PROJECT_ID = "howdy-ed4fe";
+const PROJECT_ID = "lore-worldbuilding";
 const FIREBASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/`;
 
-const SERVICE_ACCOUNT_EMAIL = "firebase-adminsdk-fbsvc@howdy-ed4fe.iam.gserviceaccount.com";
+const SERVICE_ACCOUNT_EMAIL = "firebase-adminsdk-fbsvc@lore-worldbuilding.iam.gserviceaccount.com";
 const PRIVATE_KEY = getFirestorePrivateKey().replace(/\\n/g, '\n');
 
 //Get authentication token using Google Apps Script's OAuth service
@@ -50,7 +50,9 @@ function getAccessToken() {
 
 //Read Firestore Data based on collection name ("Characters", "Events", "Locations") FOR NOW
 function getFirestoreData(collection) {
-  var url = FIREBASE_URL + collection;
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${collection}`;
+  var url = FIREBASE_URL + path;
   
   var options = {
     method: "get",
@@ -67,11 +69,12 @@ function getFirestoreData(collection) {
   }
 
   // Extract relevant fields from Firestore response
-  var result = jsonData.documents.map(doc => {
-    var fields = doc.fields;
-    return fields.Name.stringValue; // Adjust this based on Firestore structure
-  });
-
+  const result = jsonData.documents
+    .filter(doc => !doc.name.endsWith("/_init"))
+    .map(doc => {
+      const fields = doc.fields || {};
+      return fields.Name?.stringValue || "(Unnamed)";
+    });
   Logger.log(result);
   return result;
 }

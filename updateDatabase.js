@@ -28,7 +28,10 @@ function deleteEntity(catalog, entity, listItem) {
 function deleteCatalogEntity(catalog, entity){
   //catalog = "Characters";
   //entity - "Test"
-  var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entity);
+  removeExistingEntity(entity);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entity)}`;
+  var url = FIREBASE_URL + path;
 
   var options = {
     method: "delete",
@@ -59,7 +62,9 @@ function deleteCatalogEntity(catalog, entity){
 // - entityName: Name of Entity
 function addCatalogEntity(catalog, entityName) {
   addExistingEntity(entityName); // adds entity name to list of all entity names
-  var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
 
   // Base fields that all collections share
   var fields = {
@@ -166,8 +171,9 @@ function updateCatalogEntity(collection, documentId, updateData) {
     Authorization: "Bearer " + getAccessToken(),
     "Content-Type": "application/json"
   };
-
-  const originalUrl = FIREBASE_URL + collection + "/" + encodeURIComponent(documentId);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${collection}/${encodeURIComponent(documentId)}`;
+  const originalUrl = FIREBASE_URL + path;
 
   //Check if name is being updated (implies renaming the document ID)
   const newName = updateData.Name?.stringValue;
@@ -195,7 +201,9 @@ function updateCatalogEntity(collection, documentId, updateData) {
       originalFields[key] = updateData[key];
     }
 
-    const newUrl = FIREBASE_URL + collection + "/" + encodeURIComponent(newName);
+    const newPath = `Users/${uid}/Worlds/${worldId}/${collection}/${encodeURIComponent(newName)}`;
+    const newUrl = FIREBASE_URL + newPath;
+
     const createOptions = {
       method: "PATCH",
       headers: headers,
@@ -224,7 +232,6 @@ function updateCatalogEntity(collection, documentId, updateData) {
   const updateMask = Object.keys(updateData).join(",");
   const updateUrl = originalUrl + "?updateMask.fieldPaths=" + encodeURIComponent(updateMask);
 
-
   const patchOptions = {
     method: "PATCH",
     headers: headers,
@@ -252,7 +259,9 @@ function updateCatalogEntity(collection, documentId, updateData) {
 function getDocumentFields(collection, documentId) {
   //collection = "Characters";
   //documentId = "Bilbo";
-  var url = FIREBASE_URL + collection + "/" + encodeURIComponent(documentId);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${collection}/${encodeURIComponent(documentId)}`;
+  var url = FIREBASE_URL + path;
 
   var options = {
     method: "get",
@@ -283,7 +292,9 @@ function getDocumentFields(collection, documentId) {
 function getCatalogEntity(catalog, entityName) {
   //catalog = 'Characters';
   //entityName = 'Bilbo'
-  var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  var url = FIREBASE_URL + path;
 
   var options = {
     method: "GET",
@@ -328,8 +339,9 @@ function getEntityAttribute(catalog, entityName, attribute) {
   //catalog = 'Characters';
   //entityName = 'test2';
   //attribute = 'PersonalityTraits';
-  var url = FIREBASE_URL + catalog + "/" + 
-  encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  var url = FIREBASE_URL + path;
 
   var options = {
     method: "GET",
@@ -360,6 +372,19 @@ function getEntityAttribute(catalog, entityName, attribute) {
   }
 }
 
+function getSummary(catalog, entityName){
+  listOfAttributes = getCatalogEntity(catalog, entityName);
+  var description = listOfAttributes['Description'];
+  if (description) {
+    Logger.log(description);
+    return description;
+  }
+  else{
+    Logger.log('No summary');
+    return;
+  }
+}
+
 //Function to ADD where characters appear
 //Parameters:
 // - catalog: "Characters", "Events", etc.
@@ -367,11 +392,14 @@ function getEntityAttribute(catalog, entityName, attribute) {
 // - page: string of page entity appears
 // - excerpt: string of excerpt from writing
 function logNarrativeMention(catalog, entityName, page, excerpt) {
+  //Example parameters:
   //catalog = "Characters";
-  //entityName = "test2";
+  //entityName = "test";
   //page = "1";
   //excerpt = "Testing narrative mention";
-  const url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
 
   const getOptions = {
     method: "GET",
@@ -422,14 +450,17 @@ function logNarrativeMention(catalog, entityName, page, excerpt) {
 //Parameters:
 // - catalog: "Characters", "Events", etc.
 // - entityName: current name (used as document ID)
-// - index: the index of the narrative mention (string!)
+// - index: the index of the narrative mention (String!)
 // - UpdatedExcerpt: new string of excerpt from writing
 function updateNarrativeMention(catalog, entityName, index, updatedExcerpt) {
+  //Example parameters:
   //catalog = "Characters";
-  //entityName = "test2";
+  //entityName = "test";
   //index = "0";
   //updatedExcerpt = "Testing update narrative mention";
-  const url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
 
   const getResponse = UrlFetchApp.fetch(url, {
     method: "GET",
@@ -471,10 +502,13 @@ function updateNarrativeMention(catalog, entityName, index, updatedExcerpt) {
 // - entityName: current name (used as document ID)
 // - index: the index of the narrative mention (String!)
 function deleteNarrativeMention(catalog, entityName, indexToRemove) {
+  //Example parameters:
   //catalog = "Characters";
-  //entityName = "test2";
+  //entityName = "test";
   //indexToRemove = "0";
-  const url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
 
   const getResponse = UrlFetchApp.fetch(url, {
     method: "GET",

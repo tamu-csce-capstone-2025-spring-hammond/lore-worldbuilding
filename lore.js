@@ -5,7 +5,7 @@ function onOpen() {
   if (doc) {
     DocumentApp.getUi()
       .createAddonMenu()
-      .addItem("Open Sidebar", "showLandingPage")
+      .addItem("Open Sidebar", "showLoginPage")
       .addToUi();
       Logger.log(doc.getName())
   }
@@ -16,7 +16,13 @@ function onOpen() {
 }
 
 // Navigate pages START //
-function showLandingPage() {
+function showLoginPage() {
+  var template = HtmlService.createTemplateFromFile('login');
+  var html = template.evaluate().setTitle('LORE Worldbuilder').setWidth(500);
+  DocumentApp.getUi().showSidebar(html);
+}
+
+function showWorldPage() {
   var template = HtmlService.createTemplateFromFile('landingPage');
   var html = template.evaluate().setTitle('LORE Worldbuilder').setWidth(500);
   DocumentApp.getUi().showSidebar(html);
@@ -39,6 +45,9 @@ function showPage(page) {
       htmlFile = "viewProperNouns"
     } else if(page == "viewWritingMode"){
       htmlFile = "viewWritingMode"
+    } else if(page == "login"){
+      htmlFile = "login"
+      clearEntityTracking();
     } else {
       throw new Error("Invalid page requested: " + page);
     }

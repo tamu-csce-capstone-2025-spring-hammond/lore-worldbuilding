@@ -35,7 +35,10 @@ function callOpenAI(prompt) {
 }
 
 
-function getParagraphsContaining(characterName) {
+
+
+
+function getParagraphsContainingCharacter(characterName) {
   var doc = DocumentApp.getActiveDocument();
   var body = doc.getBody();
   var paragraphs = body.getParagraphs();
@@ -51,39 +54,28 @@ function getParagraphsContaining(characterName) {
   return matches; // Returns an array of matching text
 }
 
-
-function buildFilteredPrompt(characterName, matchedTextArray) {
+function buildFilteredPromptForCharacter(characterName, matchedTextArray) {
   var joinedText = matchedTextArray.join("\n\n");
   var prompt = `Summarize the character "${characterName}" based on the following text. Include appearance, personality traits, background, and notable actions:\n\n${joinedText}`;
   return prompt;
 }
 
-
 function summarizeCharacter(characterName) {  
-  var matches = getParagraphsContaining(characterName);
+  console.log('summarizeCharacter function is running');
+  var matches = getParagraphsContainingCharacter(characterName);
 
   if (matches.length === 0) {
     Logger.log("No text found for character: " + characterName);
     return;
   }
 
-  var prompt = buildFilteredPrompt(characterName, matches);
+  var prompt = buildFilteredPromptForCharacter(characterName, matches);
   var summary = callOpenAI(prompt);
   Logger.log("Character Summary:\n" + summary);
-}
-
-function testSummary() {
-  summarizeCharacter("Harry");
+  return summary;
 }
 
 
-
-
-function getCharacterSummary(characterName, text) { // Unused function
-  var prompt = 
-  `Summarize the character: "${characterName}" based on the following text. Focus mainly on what the character does and what events they go through. \n\n${text}`;
-  return callOpenAI(prompt);
-}
 
 
 
@@ -107,4 +99,20 @@ Include:
 Text:
 ${text}
   `;
+}
+
+function summarize(catalog, name) {
+  console.log('Attempting a summary for a ' + catalog);
+  if (catalog == 'Character') {
+    summarizeCharacter(name);
+    return;
+  }
+  if (catalog == 'Event') {
+    summarizeEvent(name);
+    return;
+  }
+  if (catalog == 'Location') {
+    summarizeLocation(name);
+    return;
+  }
 }

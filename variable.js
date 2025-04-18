@@ -95,7 +95,7 @@ function addExistingEntity(entityName) {
   
   let existingArray = [];
   if (existing) {
-    existingArray = JSON.parse(ignored);
+    existingArray = JSON.parse(existing);
   }
 
   if (!existingArray.includes(entityName)) {
@@ -106,6 +106,35 @@ function addExistingEntity(entityName) {
   // return the updated list to the client
   return existingArray;
 }
+
+function removeExistingEntity(entityName) {
+  const userProperties = PropertiesService.getUserProperties();
+  const existing = userProperties.getProperty('existingEntities');
+  
+  let existingArray = [];
+  if (existing) {
+    existingArray = JSON.parse(existing);
+  }
+
+  const updatedArray = existingArray.filter(e => e !== entityName);
+
+  userProperties.setProperty('existingEntities', JSON.stringify(updatedArray));
+
+  return updatedArray;
+}
+
+function clearEntityTracking() {
+  const userProperties = PropertiesService.getUserProperties();
+  userProperties.deleteProperty('ignoredEntities');
+  userProperties.deleteProperty('existingEntities');
+  
+  return {
+    message: "Entity tracking reset.",
+    ignoredCleared: true,
+    existingCleared: true
+  };
+}
+
 
 
 
