@@ -7,6 +7,7 @@
   <body>
     <div class="back-btn-container">
       <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
+      <input type="text" id="searchBar" placeholder="Search entities..." oninput="filterEntities()" />
     </div>
 
     <div id="container"></div>
@@ -22,7 +23,7 @@
         ignoredEntities: []
       };
 
-      //Load from localStorage to ensure persistence
+      // Load from localStorage to ensure persistence
       const existingFromLocal = JSON.parse(localStorage.getItem(`existingEntities-${worldId}`));
       const ignoredFromLocal = JSON.parse(localStorage.getItem(`ignoredEntities-${worldId}`));
 
@@ -92,7 +93,7 @@
                 ]
               };
 
-              //Update window cache and persist
+              // Update window cache and persist
               window.cache = mergedCache;
               sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(mergedCache));
               localStorage.setItem(`existingEntities-${worldId}`, JSON.stringify(mergedCache.existingEntities));
@@ -107,7 +108,7 @@
         btn2.onclick = function () {
           google.script.run
             .withSuccessHandler(() => {
-              //Ensure structure exists
+              // Ensure structure exists
               if (!window.cache.catalogData) window.cache.catalogData = {};
               if (!window.cache.catalogData['Locations']) window.cache.catalogData['Locations'] = [];
               if (!window.cache.existingEntities) window.cache.existingEntities = [];
@@ -244,6 +245,22 @@
         }).getNewProperNouns();
       }, 3000);
     });
+
+    //function to search through the entities
+    function filterEntities() {
+      const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+      const allEntities = document.querySelectorAll('.entity-container');
+
+      allEntities.forEach(entity => {
+        const name = entity.querySelector('span').textContent.toLowerCase();
+        if (name.includes(searchTerm)) {
+          entity.style.display = '';
+        } else {
+          entity.style.display = 'none';
+        }
+      });
+    }
+
     </script>
   </body>
 </html>
