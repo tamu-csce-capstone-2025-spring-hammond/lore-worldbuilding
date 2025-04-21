@@ -8,95 +8,305 @@
     <?!= include('defaultStyles'); ?>
 
     <script>
-      // Display each catalog
+      //Caching worldID for each unique world
+      const worldId = localStorage.getItem("worldId") || "default";
+
+      //load previosuly cached data if it exists
+      window.cache = JSON.parse(sessionStorage.getItem(`cachedData-${worldId}`)) || {
+        catalogData: {},
+        entityData: {},
+        radarData: {}
+      };
+
+      window.catalogsList = JSON.parse(sessionStorage.getItem(`catalogsList-${worldId}`)) || null;
+      window.renderStatus = {}; // Tracks which catalogs are fully rendered
+
+      /*IMPORTANT INFORMATION FOR CACHE
+
+        Key: `cachedData-${worldId}`
+        values: {
+          catalogData: {
+            Characters: ["Bilbo", "Frodo", ...],
+            Locations: ["The Shire", "Mordor", ...],
+            Events: ["Ring Found", "Council of Elrond", ...]
+          },
+          entityData: {
+            "Bilbo": { Age: "111", Height: "3'6\"", ... },
+            "The Shire": { Terrain: "Plains", Region: "Westfarthing", ... }
+          },
+          radarData: {
+            "Bilbo": { initial: {Trait1: {intValue: 75}}, current: {...} }
+          },
+          existingEntities: ["Bilbo", "Frodo", "The Shire", "Ring Found"],
+          ignoredEntities: ["SomeWordToIgnore", "AnotherOne"]
+        }
+
+        Get Full Cache object:
+        const worldId = localStorage.getItem("worldId") || "default";
+        const cache = JSON.parse(sessionStorage.getItem(`cachedData-${worldId}`));
+
+        Get Info Example:
+        const characters = cache.catalogData?.Characters (Events/Locations) || [];
+
+      */
+
+      //Function to load catalogs with either the cached data or by calling from the backend
       function loadCatalogs() {
-        google.script.run.withSuccessHandler(displayCatalogs).getCatalogs();
+        const cachedCatalogs = window.catalogsList;
+        const cachedCatalogData = window.cache.catalogData;
+
+        // Case: Everything is cached
+        if (cachedCatalogs && Array.isArray(cachedCatalogs) && cachedCatalogs.length > 0) {
+          console.log("Using fully cached data");
+          displayCatalogs(cachedCatalogs);
+
+          //Hide loading immediately since we're using cached data
+          hideLoading();
+
+          //Set data-ready flags for cached catalogs
+          cachedCatalogs.forEach((catalog) => {
+            const sublist = document.getElementById(`data-${catalog}`);
+            const cached = cachedCatalogData[catalog];
+
+            if (sublist && cached && Array.isArray(cached)) {
+              sublist.setAttribute("data-ready", "true");
+            } else if (!cached) {
+              // Preload missing data in background
+              google.script.run.withSuccessHandler((data) => {
+                window.cache.catalogData[catalog] = data.data;
+                const sublist = document.getElementById(`data-${catalog}`);
+                if (sublist) {
+                  displayCatalogData(catalog, data);
+                  sublist.setAttribute("data-ready", "true");
+                }
+              }).getCatalogData(catalog);
+            }
+          });
+
+          afterCatalogsLoaded();
+          return;
+        }
+
+        //Otherwise, load everything from backend
+        showLoading();
+        google.script.run.withSuccessHandler((catalogs) => {
+          window.catalogsList = catalogs;
+          sessionStorage.setItem(`catalogsList-${worldId}`, JSON.stringify(catalogs));
+
+          displayCatalogs(catalogs);
+
+          let pending = catalogs.length;
+          if (pending === 0) {
+            hideLoading();
+            afterCatalogsLoaded();
+            return;
+          }
+
+          catalogs.forEach((catalog) => {
+            google.script.run.withSuccessHandler((data) => {
+              window.cache.catalogData[catalog] = data.data;
+              displayCatalogData(catalog, data);
+              const sublist = document.getElementById(`data-${catalog}`);
+              if (sublist) sublist.setAttribute("data-ready", "true");
+
+              if (--pending === 0) {
+                hideLoading();
+                afterCatalogsLoaded();
+              }
+            }).getCatalogData(catalog);
+          });
+        }).getCatalogs();
       }
 
+      //Emergency cache clear for debuggin
+      //DEVELOPER FUNCTION!!!!
+      function clearAllCache() {
+        const worldId = localStorage.getItem("worldId") || "default";
+
+        // Clear in-memory cache
+        window.cache = {
+          catalogData: {},
+          entityData: {},
+          radarData: {},
+          existingEntities: [],
+          ignoredEntities: []
+        };
+
+        // Remove from sessionStorage
+        sessionStorage.removeItem(`cachedData-${worldId}`);
+        sessionStorage.removeItem(`catalogsList-${worldId}`);
+
+        // Remove from localStorage
+        localStorage.removeItem(`existingEntities-${worldId}`);
+        localStorage.removeItem(`ignoredEntities-${worldId}`);
+
+        // Optional: Reload the page or reload catalogs
+        console.log("All cache cleared for world:", worldId);
+        loadCatalogs(); // or: location.reload();
+      }
+
+
+      //Function to display the catalogs (characters,locations,events)
       function displayCatalogs(catalogs) {
-        let list = document.getElementById("catalogList");
+        const list = document.getElementById("catalogList");
 
         let addButton = document.getElementById("addEntity");
         if (!addButton) {
           addButton = document.createElement("li");
           addButton.id = "addEntity";
           addButton.textContent = "Add an Entity";
-          addButton.onclick = function () {
-            showAddEntity();
-          };
+          addButton.onclick = () => showAddEntity();
         }
 
-        // Clear previous items
-        list.innerHTML = ""; 
+        list.innerHTML = "";
 
         catalogs.forEach((catalog) => {
-          let li = document.createElement("li");
+          const li = document.createElement("li");
           li.innerHTML = `<span onclick="toggleCatalog('${catalog}')">${catalog} ▼</span>`;
-          
-          let sublist = document.createElement("ul");
-          sublist.id = `data-${catalog}`;
-          sublist.style.display = "none"; // Initially hidden
-          
+
+          const sublist = document.createElement("ul");
+          sublist.id = `data-${catalog}`; //MUST come before calling displayCatalogData
+          sublist.style.display = "none";
           li.appendChild(sublist);
           list.appendChild(li);
-        });
-        list.appendChild(addButton);
 
+          const cached = window.cache.catalogData[catalog];
+          if (cached && Array.isArray(cached)) {
+            displayCatalogData(catalog, { data: cached });
+            sublist.setAttribute("data-ready", "true");
+          }
+        });
+
+        list.appendChild(addButton);
         window.catalogsList = catalogs;
       }
 
-      // Display each catalog's items
+
+      //
+      function afterCatalogsLoaded() {
+          // Or default to opening the Summary tab
+          document.getElementById("summaryButton")?.click();
+      }
+
+      //Displays all of the entities that belong to a type of catalog
+      // - catalogs: string of a type of entity (Location, Character, Event)
       function displayCatalogData(catalog, response) {
-        console.log("Data received for catalog:", catalog, response);
-
-        let sublist = document.getElementById(`data-${catalog}`);
-        sublist.innerHTML = ""; // Clear old data
-
-        //Fix: Extract data from response object
-        let data = response.data; 
+        const sublist = document.getElementById(`data-${catalog}`);
+        const data = response.data;
 
         if (!Array.isArray(data) || data.length === 0) {
-            sublist.innerHTML = "<li>No data found</li>"; // Show message if empty
-            return;
+          sublist.innerHTML = "<li>No data found</li>";
+          return;
         }
 
+        //Don't re-render if the current list already matches the cache
+        if (sublist.children.length === data.length) {
+          const existingItems = Array.from(sublist.children).map(li => li.innerText.trim());
+          const isSame = data.every((item, i) => item === existingItems[i]);
+          if (isSame) return;
+        }
+
+        sublist.innerHTML = "";
         data.forEach((item) => {
-          let li = document.createElement("li");
-          let span = document.createElement("span");
+          const li = document.createElement("li");
+          const span = document.createElement("span");
           span.textContent = item;
           span.style.display = "block";
           span.style.cursor = "pointer";
           span.onclick = function () {
             showEntityDetails(catalog, item);
           };
+          li.appendChild(span);
+          sublist.appendChild(li);
+        });
 
+        //Mark catalog as fully rendered
+        window.renderStatus[catalog] = true;
+      }
+
+
+      //Function to get information for a specific entity
+      // - catalog: string of a type of entity (Location, Character, Event)
+      // - response
+      function displayCatalogData(catalog, response) {
+        const sublist = document.getElementById(`data-${catalog}`);
+
+        const data = response.data;
+        if (!Array.isArray(data) || data.length === 0) {
+          sublist.innerHTML = "<li>No data found</li>";
+          return;
+        }
+
+        //Don't re-render if the current list already matches the cache
+        if (sublist.children.length === data.length) {
+          const existingItems = Array.from(sublist.children).map(li => li.innerText.trim());
+          const isSame = data.every((item, i) => item === existingItems[i]);
+          if (isSame) return;
+        }
+
+        sublist.innerHTML = ""; //Only clear when necessary
+        data.forEach((item) => {
+          const li = document.createElement("li");
+          const span = document.createElement("span");
+          span.textContent = item;
+          span.style.display = "block";
+          span.style.cursor = "pointer";
+          span.onclick = function () {
+            showEntityDetails(catalog, item);
+          };
           li.appendChild(span);
           sublist.appendChild(li);
         });
       }
 
-      //Delete Entities
+
+
+      //Function that deletes the entity selected
       function deleteEntity() {
         const modal = document.getElementById("viewEntityModal");
         const entityName = modal.getAttribute("data-entity");
-        console.log("Deleting..." + entityName);
-
         const catalog = modal.getAttribute("data-catalog");
-
-        console.log("Deleting..." + catalog);
 
         if (!catalog || !entityName) {
           alert("Missing catalog or entity information.");
           return;
         }
 
+        // Remove from existingEntities cache if present
+        if (Array.isArray(window.cache.existingEntities)) {
+          window.cache.existingEntities = window.cache.existingEntities.filter(
+            name => name !== entityName
+          );
+        }
+
+        //Optimistically remove from cache
+        if (window.cache.catalogData[catalog]) {
+          window.cache.catalogData[catalog] = window.cache.catalogData[catalog].filter(
+            name => name !== entityName
+          );
+          displayCatalogData(catalog, { data: window.cache.catalogData[catalog] });
+        }
+
+        
+        const worldId = localStorage.getItem("worldId") || "default";
+        sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(window.cache));
+
+
+        //Also clear entity-specific cache
+        delete window.cache.entityData[entityName];
+        delete window.cache.radarData[entityName];
+
+        closeModal("viewEntityModal"); // Hide modal immediately
+
+        //Firestore call still happens in background
         google.script.run.withSuccessHandler(() => {
-          closeModal("viewEntityModal");
-          loadCatalogs();
+          console.log(`Deleted ${entityName} from ${catalog}`);
         }).deleteCatalogEntity(catalog, entityName);
       }
 
-      //Adding Entities
+
+
+      //Function to show modal to add an entity
       function showAddEntity() {
         let modal = document.getElementById("addEntityModal");
         let select = document.getElementById("catalogDropdown");
@@ -119,6 +329,10 @@
         document.getElementById(name).style.display = "none";
       }
 
+
+      //Submitting a new entity AND tracking with both cache
+      //existing cache for writing mode
+      //existing data fot catalog page
       function submitNewEntity() {
         let catalog = document.getElementById("catalogDropdown").value;
         let entityName = document.getElementById("entityName").value.trim();
@@ -131,10 +345,42 @@
         google.script.run.withSuccessHandler(() => {
           alert(`Entity "${entityName}" added to ${catalog}`);
           closeModal("addEntityModal");
-          loadCatalogs(); // Refresh list
+
+          //Load existing session cache
+          const existingCache = JSON.parse(sessionStorage.getItem(`cachedData-${worldId}`)) || {};
+          const existingCatalog = (existingCache.catalogData && existingCache.catalogData[catalog]) || [];
+          const currentCatalog = (window.cache.catalogData[catalog]) || [];
+
+          const mergedCatalog = [...new Set([...existingCatalog, ...currentCatalog, entityName])];
+          const mergedExisting = [...new Set([
+            ...(existingCache.existingEntities || []),
+            ...(window.cache.existingEntities || []),
+            entityName
+          ])];
+
+          const newCache = {
+            ...existingCache,
+            ...window.cache,
+            catalogData: {
+              ...existingCache.catalogData,
+              ...window.cache.catalogData,
+              [catalog]: mergedCatalog
+            },
+            existingEntities: mergedExisting
+          };
+
+          window.cache = newCache;
+          sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(newCache));
+          localStorage.setItem(`existingEntities-${worldId}`, JSON.stringify(newCache.existingEntities));
+
+          // Re-render
+          displayCatalogData(catalog, { data: mergedCatalog });
         }).addCatalogEntity(catalog, entityName);
       }
 
+
+
+      //would be used to show fields that can be used to edit a catalog
       function showUpdateEntity(catalog, entity) {
         let modal = document.getElementById("showEntityModal");
 
@@ -169,61 +415,118 @@
       }
 
       function updateEntity() {
-        let catalog = document.getElementById("fieldDropdown").getAttribute("data-catalog");
-        let entity = document.getElementById("fieldDropdown").getAttribute("data-entity");
-        let field = document.getElementById("fieldDropdown").value;
-        let newValue = document.getElementById("fieldName").value.trim();
-        console.log("Catalog:", catalog);
-        console.log("Entity:", entity);
-        console.log("Field:", field);
-        console.log("New Value:", newValue);
+        const dropdown = document.getElementById("fieldDropdown");
+        const catalog = dropdown.getAttribute("data-catalog");
+        const entity = dropdown.getAttribute("data-entity");
+        const field = dropdown.value;
+        const newValue = document.getElementById("fieldName").value.trim();
 
         if (!catalog || !entity || !field || !newValue) {
           alert("Please select a field and enter a new value.");
           return;
         }
 
-        let updateData = {};
-        updateData[field] = { stringValue: newValue };  // Firestore format
-
-        console.log(`Updating ${field} in ${entity} (Catalog: ${catalog}) to: ${newValue}`);
+        const updateData = {};
+        updateData[field] = { stringValue: newValue };
 
         google.script.run.withSuccessHandler(() => {
           alert(`"${field}" updated successfully!`);
           closeModal("showEntityModal");
+
+          //Invalidate cache
+          delete window.cache.entityData[entity];
+          delete window.cache.radarData[entity];
+
           loadCatalogs(); // Refresh list
         }).updateCatalogEntity(catalog, entity, updateData);
       }
 
-      //Get data
+
+      let toggleTimers = {}; // store timeouts per catalog
+
       function toggleCatalog(catalog) {
-        console.log("Clicked category:", catalog); // Debugging log
+        const sublist = document.getElementById(`data-${catalog}`);
+        if (!sublist) return;
 
-        let sublist = document.getElementById(`data-${catalog}`);
-        
-        if (!sublist) {
-            console.log("Error: Sublist element not found for", catalog);
-            return;
-        }
+        const isHidden = sublist.style.display === "none";
 
-        if (sublist.style.display === "none") {
-          google.script.run.withSuccessHandler((data) => {
-              console.log("Received data for", catalog, data); // Debugging log
-              displayCatalogData(catalog, data);
-          }).getCatalogData(catalog);
+        if (isHidden) {
+          const isReady = sublist.getAttribute("data-ready") === "true";
+          const isRendered = window.renderStatus[catalog] === true;
 
-          sublist.style.display = "block"; // Expand
+          if (isReady && isRendered && sublist.children.length > 0) {
+            sublist.style.display = "block";
+          } else {
+            const cached = window.cache.catalogData[catalog];
+
+            if (cached && Array.isArray(cached)) {
+              displayCatalogData(catalog, { data: cached });
+              sublist.setAttribute("data-ready", "true");
+
+              // Delay showing until next frame to avoid flicker
+              requestAnimationFrame(() => {
+                sublist.style.display = "block";
+              });
+            } else {
+              console.log("📡 Fetching catalog data from backend:", catalog);
+              sublist.innerHTML = "<li><em>Loading...</em></li>";
+              sublist.style.display = "block";
+
+              google.script.run.withSuccessHandler((data) => {
+                window.cache.catalogData[catalog] = data.data;
+                displayCatalogData(catalog, data);
+                sublist.setAttribute("data-ready", "true");
+
+                requestAnimationFrame(() => {
+                  sublist.style.display = "block";
+                });
+              }).getCatalogData(catalog);
+            }
+          }
         } else {
-          sublist.style.display = "none"; // Collapse
+          sublist.style.display = "none";
         }
       }
+    
+      function showLoading() {
+        document.getElementById("loadingOverlay").style.display = "flex";
+      }
+
+      function hideLoading() {
+        document.getElementById("loadingOverlay").style.display = "none";
+      }
+
 
     function showEntityDetails(catalog, entityName) {
       google.script.run.withSuccessHandler((entityData) => {
+        window.cache.entityData[entityName] = entityData;
         const modal = document.getElementById("viewEntityModal");
         const nameDisplay = document.getElementById("viewEntityName");
         const attributesList = document.getElementById("entityAttributesList");
         const occurrencesList = document.getElementById("entityOccurencesList");
+
+        // Default summary text
+        document.getElementById("summaryContent").innerText = "Loading summary...";
+        // Pull summary or generate summary
+        google.script.run.withSuccessHandler(function(description) {
+          if (description){
+            console.log('Description is already in database');
+            document.getElementById("summaryContent").innerText = description;
+          }
+          else {
+            console.log('Description is not in database');
+            //Run summarize and update summaryContent when done
+            google.script.run.withSuccessHandler(function(summary) {
+              document.getElementById("summaryContent").innerText = summary || "No summary available.";
+              if(summary) {
+                console.log("Generated summary");
+                google.script.run.updateCatalogEntity(catalog, entityName, {Description: {stringValue : summary}});
+                console.log('Updated description in database');
+              }
+              console.log("Post summary check");
+            }).summarizeCharacter(entityName);
+          }
+        }).getSummary(catalog, entityName);
 
         modal.setAttribute("data-entity", entityName);
         modal.setAttribute("data-catalog", catalog);
@@ -304,6 +607,7 @@
       }).getCatalogEntity(catalog, entityName); 
     }
 
+
     function openTab(evt, tabInfo) {
       console.log("Switching to " + tabInfo);
       // Declare all variables
@@ -339,26 +643,33 @@
     }
 
     function loadRadarChart(entityName) {
-      // Log the passed entityName for debugging
-      console.log("Calling getRadarData for:", entityName);
-
-      google.script.run
-        .withSuccessHandler(function(data) {
-          console.log("Radar data received:", data);
-          renderChart(data);
-        })
-        .withFailureHandler(function(error) {
-          console.error("Error calling getRadarData:", error);
-        })
-        .getEntityAttribute('Characters', entityName, 'PersonalityTraits');
+      if (window.cache.radarData[entityName]) {
+        console.log("Using cached radar data for:", entityName);
+        renderChart(window.cache.radarData[entityName]);
+      } else {
+        google.script.run
+          .withSuccessHandler(function(data) {
+            window.cache.radarData[entityName] = data;
+            renderChart(data);
+          })
+          .withFailureHandler(function(error) {
+            console.error("Error calling getRadarData:", error);
+          })
+          .getCharacterPersonalityComparison(entityName);
+      }
     }
+
     
     window.onload = loadCatalogs; 
 
     // summary tab is open upon loading up a character
-    document.addEventListener("DOMContentLoaded", function(event) { 
-      document.getElementById("summaryButton").click();
-    });
+
+    window.addEventListener("beforeunload", () => {
+    const worldId = localStorage.getItem("worldId") || "default";
+    sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(window.cache));
+    sessionStorage.setItem(`catalogsList-${worldId}`, JSON.stringify(window.catalogsList));
+  });
+
     </script>
   </head>
 
@@ -430,7 +741,7 @@
           </div>
 
           <div id="Summary" class="tabcontent">
-            <p>placeholder text</p>
+            <p class="summary-information" id="summaryContent">Loading summary...</p>
             <button class="accent-btn" onclick="deleteEntity()" style="background-color: #c9807b"> Delete Entity </button>
           </div>
 
@@ -452,38 +763,49 @@
 
     <script>
       function renderChart(data) {
-        console.log("Radar chart data received:", data.fields);
-        const data2 = data.fields;
-        const labels = [];
-        const values = [];
+        console.log("Radar chart data received:", data);
 
-        for (const trait in data2) {
-          if (data2.hasOwnProperty(trait)) {
-            labels.push(trait);
-            values.push(parseInt(data2[trait].integerValue));
-          }
+        if (!data || !data.initial || !data.current) {
+          console.error("Missing initial or current personality trait data.");
+          return;
         }
-        
-        // Clear any previous chart instance (optional, if needed)
+
+        const initial = data.initial;
+        const current = data.current;
+
+        const labels = Object.keys(initial);
+        const initialValues = labels.map(trait => parseInt(initial[trait]?.integerValue || 50));
+        const currentValues = labels.map(trait => parseInt(current[trait]?.integerValue || 50));
+
         const canvas = document.getElementById('radarChart');
         const ctx = canvas.getContext('2d');
 
         if (canvas.chartInstance) {
           canvas.chartInstance.destroy();
         }
-        
+
         canvas.chartInstance = new Chart(ctx, {
           type: 'radar',
           data: {
             labels: labels,
-            datasets: [{
-              label: 'Personality Traits',
-              data: values,
-              fill: true,
-              backgroundColor: 'rgba(54, 162, 235, 0.2)',
-              borderColor: 'rgba(54, 162, 235, 1)',
-              pointBackgroundColor: 'rgba(54, 162, 235, 1)'
-            }]
+            datasets: [
+              {
+                label: 'Initial',
+                data: initialValues,
+                fill: true,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                pointBackgroundColor: 'rgba(255, 99, 132, 1)'
+              },
+              {
+                label: 'Current',
+                data: currentValues,
+                fill: true,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+              }
+            ]
           },
           options: {
             scales: {
@@ -496,6 +818,8 @@
           }
         });
       }
+
+
     </script>
 
 
@@ -504,6 +828,31 @@
     function navigateTo(page) {
       google.script.run.showPage(page);
     }
-    </script>
+      </script>
+      
+      <div id="loadingOverlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 255, 255);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 9999;
+      ">
+
+  
+  <div class="spinner"></div>
+  <div style="margin-top: 15px; font-family: sans-serif; font-size: 1.2em;">
+    Loading catalogs...
+  </div>
+</div>
+
+<button onclick="clearAllCache()" style="position:fixed; bottom:10px; right:10px;">Clear Cache</button>
+
+
   </body>
 </html>

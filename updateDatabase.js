@@ -94,7 +94,7 @@ function addCatalogEntity(catalog, entityName) {
     Accessories: { arrayValue: { values: [] } },
 
     //New field: PersonalityTraits (all start at neutral 50)
-    PersonalityTraits: {
+    InitialPersonalityTraits: {
       mapValue: {
         fields: {
           Honesty:         { integerValue: 50 },
@@ -110,6 +110,23 @@ function addCatalogEntity(catalog, entityName) {
         }
       }
     },
+    CurrentPersonalityTraits: {
+      mapValue: {
+        fields: {
+          Honesty:         { integerValue: 50 },
+          Creativity:      { integerValue: 50 },
+          Dominance:       { integerValue: 50 },
+          Optimism:        { integerValue: 50 },
+          Extroversion:    { integerValue: 50 },
+          Logic:           { integerValue: 50 },
+          Selfishness:     { integerValue: 50 },
+          Forgiveness:     { integerValue: 50 },
+          Humility:        { integerValue: 50 },
+          Discipline:      { integerValue: 50 }
+        }
+      }
+    },
+
     
     //Associated Entities
     AssociatedEvents: {
@@ -541,4 +558,26 @@ function deleteNarrativeMention(catalog, entityName, indexToRemove) {
     },
     payload: JSON.stringify(patchPayload)
   });
+}
+
+//Function to GET the initial AND current personality of a character
+//Parameters:
+// - entityName: current name (used as document ID)
+function getCharacterPersonalityComparison(entityName) {
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/Characters/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
+
+  const response = UrlFetchApp.fetch(url, {
+    method: "get",
+    headers: {
+      Authorization: "Bearer " + getAccessToken()
+    }
+  });
+
+  const data = JSON.parse(response.getContentText());
+  return {
+    initial: data.fields.InitialPersonalityTraits.mapValue.fields,
+    current: data.fields.CurrentPersonalityTraits.mapValue.fields
+  };
 }

@@ -11,7 +11,24 @@
 
     <div id="container"></div>
 
-    <script>
+    <script>  
+
+      const worldId = localStorage.getItem("worldId") || "default";
+      window.cache = JSON.parse(sessionStorage.getItem(`cachedData-${worldId}`)) || {
+        catalogData: {},
+        entityData: {},
+        radarData: {},
+        existingEntities: [],
+        ignoredEntities: []
+      };
+
+      //Load from localStorage to ensure persistence
+      const existingFromLocal = JSON.parse(localStorage.getItem(`existingEntities-${worldId}`));
+      const ignoredFromLocal = JSON.parse(localStorage.getItem(`ignoredEntities-${worldId}`));
+
+      if (Array.isArray(existingFromLocal)) window.cache.existingEntities = existingFromLocal;
+      if (Array.isArray(ignoredFromLocal)) window.cache.ignoredEntities = ignoredFromLocal;
+
       function navigateTo(page) {
         google.script.run.showPage(page);
       }
@@ -33,9 +50,54 @@
         btn1.textContent = 'Character';
         btn1.onclick = function () {
           console.log("Adding character...");
+
           google.script.run
             .withSuccessHandler(() => {
-              wrapper.remove(); // remove the entire div after success
+              //Ensure structure exists in window.cache
+              if (!window.cache.catalogData) window.cache.catalogData = {};
+              if (!window.cache.catalogData['Characters']) window.cache.catalogData['Characters'] = [];
+              if (!window.cache.existingEntities) window.cache.existingEntities = [];
+
+              //Add new character if not already in cache
+              if (!window.cache.catalogData['Characters'].includes(entityName)) {
+                window.cache.catalogData['Characters'].push(entityName);
+              }
+              if (!window.cache.existingEntities.includes(entityName)) {
+                window.cache.existingEntities.push(entityName);
+              }
+
+              //Merge with existing session cache to avoid overwriting other catalogs
+              const existingCache = JSON.parse(sessionStorage.getItem(`cachedData-${worldId}`)) || {};
+
+              const mergedCatalogData = {
+                ...existingCache.catalogData,
+                ...window.cache.catalogData,
+                Characters: [
+                  ...(new Set([
+                    ...(existingCache.catalogData?.Characters || []),
+                    ...(window.cache.catalogData?.Characters || [])
+                  ]))
+                ]
+              };
+
+              const mergedCache = {
+                ...existingCache,
+                ...window.cache,
+                catalogData: mergedCatalogData,
+                existingEntities: [
+                  ...(new Set([
+                    ...(existingCache.existingEntities || []),
+                    ...window.cache.existingEntities
+                  ]))
+                ]
+              };
+
+              //Update window cache and persist
+              window.cache = mergedCache;
+              sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(mergedCache));
+              localStorage.setItem(`existingEntities-${worldId}`, JSON.stringify(mergedCache.existingEntities));
+
+              wrapper.remove();
             })
             .addCatalogEntity('Characters', entityName);
         };
@@ -45,20 +107,103 @@
         btn2.onclick = function () {
           google.script.run
             .withSuccessHandler(() => {
-              wrapper.remove(); 
+              //Ensure structure exists
+              if (!window.cache.catalogData) window.cache.catalogData = {};
+              if (!window.cache.catalogData['Locations']) window.cache.catalogData['Locations'] = [];
+              if (!window.cache.existingEntities) window.cache.existingEntities = [];
+
+              if (!window.cache.catalogData['Locations'].includes(entityName)) {
+                window.cache.catalogData['Locations'].push(entityName);
+              }
+              if (!window.cache.existingEntities.includes(entityName)) {
+                window.cache.existingEntities.push(entityName);
+              }
+
+              const existingCache = JSON.parse(sessionStorage.getItem(`cachedData-${worldId}`)) || {};
+
+              const mergedCatalogData = {
+                ...existingCache.catalogData,
+                ...window.cache.catalogData,
+                Locations: [
+                  ...(new Set([
+                    ...(existingCache.catalogData?.Locations || []),
+                    ...(window.cache.catalogData?.Locations || [])
+                  ]))
+                ]
+              };
+
+              const mergedCache = {
+                ...existingCache,
+                ...window.cache,
+                catalogData: mergedCatalogData,
+                existingEntities: [
+                  ...(new Set([
+                    ...(existingCache.existingEntities || []),
+                    ...window.cache.existingEntities
+                  ]))
+                ]
+              };
+
+              window.cache = mergedCache;
+              sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(mergedCache));
+              localStorage.setItem(`existingEntities-${worldId}`, JSON.stringify(mergedCache.existingEntities));
+
+              wrapper.remove();
             })
             .addCatalogEntity('Locations', entityName);
         };
+
 
         const btn3 = document.createElement('button');
         btn3.textContent = 'Event';
         btn3.onclick = function () {
           google.script.run
             .withSuccessHandler(() => {
+              if (!window.cache.catalogData) window.cache.catalogData = {};
+              if (!window.cache.catalogData['Events']) window.cache.catalogData['Events'] = [];
+              if (!window.cache.existingEntities) window.cache.existingEntities = [];
+
+              if (!window.cache.catalogData['Events'].includes(entityName)) {
+                window.cache.catalogData['Events'].push(entityName);
+              }
+              if (!window.cache.existingEntities.includes(entityName)) {
+                window.cache.existingEntities.push(entityName);
+              }
+
+              const existingCache = JSON.parse(sessionStorage.getItem(`cachedData-${worldId}`)) || {};
+
+              const mergedCatalogData = {
+                ...existingCache.catalogData,
+                ...window.cache.catalogData,
+                Events: [
+                  ...(new Set([
+                    ...(existingCache.catalogData?.Events || []),
+                    ...(window.cache.catalogData?.Events || [])
+                  ]))
+                ]
+              };
+
+              const mergedCache = {
+                ...existingCache,
+                ...window.cache,
+                catalogData: mergedCatalogData,
+                existingEntities: [
+                  ...(new Set([
+                    ...(existingCache.existingEntities || []),
+                    ...window.cache.existingEntities
+                  ]))
+                ]
+              };
+
+              window.cache = mergedCache;
+              sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(mergedCache));
+              localStorage.setItem(`existingEntities-${worldId}`, JSON.stringify(mergedCache.existingEntities));
+
               wrapper.remove();
             })
             .addCatalogEntity('Events', entityName);
         };
+
 
         const btn4 = document.createElement('button');
         btn4.textContent = 'Ignore';
@@ -66,6 +211,7 @@
           google.script.run
             .withSuccessHandler((ignoredList) => {
               console.log('Ignored entities:', ignoredList);
+              localStorage.setItem(`ignoredEntities-${worldId}`, JSON.stringify(window.cache.ignoredEntities));
               wrapper.remove();
             })
             .addIgnoredEntity(entityName);
@@ -96,7 +242,7 @@
             console.error("No proper nouns returned.");
           }
         }).getNewProperNouns();
-      }, 20000);
+      }, 3000);
     });
     </script>
   </body>
