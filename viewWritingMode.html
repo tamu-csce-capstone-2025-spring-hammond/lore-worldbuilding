@@ -14,6 +14,9 @@
 
     <script>  
 
+      //A set to store displayed entities so we stop getting duplicates
+      const displayedEntities = new Set();
+
       const worldId = localStorage.getItem("worldId") || "default";
       window.cache = JSON.parse(sessionStorage.getItem(`cachedData-${worldId}`)) || {
         catalogData: {},
@@ -228,25 +231,29 @@
         wrapper.appendChild(buttonGroup);
 
         container.appendChild(wrapper);
+        filterEntities();
       }
 
       // adds a new div every time the button is pressed with the entity name-->
       // calls addNewDiv every 10,000 milliseconds (10 seconds) -->
+      // Checks for duplicates
       setInterval(() => {
         google.script.run.withSuccessHandler(function(newProperNouns) {
-          // Make sure newProperNouns is not undefined
           if (newProperNouns) {
             newProperNouns.forEach(newProperNoun => {
-              addNewDiv(newProperNoun);
+              if (!displayedEntities.has(newProperNoun)) {
+                displayedEntities.add(newProperNoun);
+                addNewDiv(newProperNoun);
+              }
             });
           } else {
             console.error("No proper nouns returned.");
           }
         }).getNewProperNouns();
       }, 3000);
-    });
+  });
 
-    //function to search through the entities
+  //function to search through the entities
     function filterEntities() {
       const searchTerm = document.getElementById('searchBar').value.toLowerCase();
       const allEntities = document.querySelectorAll('.entity-container');
