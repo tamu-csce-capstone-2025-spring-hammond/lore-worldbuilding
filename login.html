@@ -2,7 +2,9 @@
 <html>
 <head>
   <base target="_top">
+  <?!= include('defaultStyles'); ?>
   <?!= include('loginStyle'); ?>
+  
   <script>
 
     //This is the data structure that holds global information for the frontend
@@ -30,6 +32,7 @@
   };
 
   function showUserDashboard(user) {
+    hideLoading();
     currentUser = user;
     //Set persistent data!
     loreState.setUID(user.uid);
@@ -77,6 +80,9 @@
 
           document.getElementById("worldList").appendChild(card);
         });
+        document.getElementById("newWorldButton").style.display = "block";
+        document.getElementById("mainContent").style.display = "block"; 
+
     }
 
     document.getElementById("newWorldButton").style.display = "block";
@@ -85,12 +91,41 @@
   //Function that runs when selecting a world
   // - worldId: a string representing the worldID
   function selectWorld(worldId) {
-    loreState.setWorldId(worldId);
-    google.script.run.setUserWorld(localStorage.getItem("uid"), worldId);
-    console.log(`Selected world: ${worldId}`);
+  loreState.setWorldId(worldId);
+  google.script.run.withSuccessHandler(() => {
+    console.log(`UID set, now fetching world: ${worldId}`);
 
-    google.script.run.showWorldPage();
-  }
+    const cachedKey = `cachedData-${worldId}`;
+    const existingKey = `existingEntities-${worldId}`;
+    const ignoredKey = `ignoredEntities-${worldId}`;
+
+    const backupLoggedRanges = localStorage.getItem("loggedRangesBackup") || JSON.stringify({});
+    if (!sessionStorage.getItem("loggedRanges")) {
+      sessionStorage.setItem("loggedRanges", backupLoggedRanges);
+      console.log("Restored loggedRanges from backup.");
+    }
+
+    google.script.run.withSuccessHandler(data => {
+      const fallbackData = {
+        catalogData: data.catalogData || {},
+        entityData: data.entityData || {},
+        radarData: data.radarData || {},
+        existingEntities: data.existingEntities || [],
+        ignoredEntities: data.ignoredEntities || []
+      };
+      sessionStorage.setItem(cachedKey, JSON.stringify(fallbackData));
+      localStorage.setItem(existingKey, JSON.stringify(fallbackData.existingEntities));
+      localStorage.setItem(ignoredKey, JSON.stringify(fallbackData.ignoredEntities));
+      console.log("Restored cachedData from Firestore. Now entering world...");
+
+      //Navigate after data is fetched and stored
+      google.script.run.showWorldPage();
+
+    }).loadCatalogDataFromFirestore(worldId);
+  }).setUserWorld(localStorage.getItem("uid"), worldId);
+}
+
+
 
   //Function to call backend function that creates a new world
   function createNewWorld() {
@@ -154,13 +189,85 @@
     .deleteWorld(loreState.uid, worldId);
   }
 
+  function hideLoading() {
+    document.getElementById("loadingOverlay").style.display = "none";
+  }
+
+function initializeSessionCache(worldId) {
+  const cachedKey = `cachedData-${worldId}`;
+  const catalogsKey = `catalogsList-${worldId}`;
+  const existingKey = `existingEntities-${worldId}`;
+  const ignoredKey = `ignoredEntities-${worldId}`;
+  console.log("📦 Attempting to fetch from Firestore with worldId:", worldId);
+
+  if (!sessionStorage.getItem(cachedKey)) {
+    const localFallback = localStorage.getItem(cachedKey);
+    if (localFallback) {
+      sessionStorage.setItem(cachedKey, localFallback);
+      console.log("Rehydrated cachedData from localStorage.");
+    } else {
+      console.log("Fetching cachedData from Firestore...");
+      google.script.run.withSuccessHandler(data => {
+        const fallbackData = {
+          catalogData: data.catalogData || {},
+          entityData: data.entityData || {},
+          radarData: data.radarData || {},
+          existingEntities: data.existingEntities || [],
+          ignoredEntities: data.ignoredEntities || []
+        };
+        sessionStorage.setItem(cachedKey, JSON.stringify(fallbackData));
+        localStorage.setItem(existingKey, JSON.stringify(fallbackData.existingEntities));
+        localStorage.setItem(ignoredKey, JSON.stringify(fallbackData.ignoredEntities));
+        console.log("Restored cachedData from Firestore.");
+      }).loadCatalogDataFromFirestore(worldId); // ⬅️ You’ll create this backend function
+    }
+  }
+
+  if (!sessionStorage.getItem(catalogsKey)) {
+    console.log("catalogsList missing for world. Consider refetching from Firestore if needed.");
+  }
+
+  if (!sessionStorage.getItem("loggedRanges")) {
+    const backup = localStorage.getItem("loggedRangesBackup");
+    if (backup) {
+      sessionStorage.setItem("loggedRanges", backup);
+      console.log("Restored loggedRanges from backup.");
+    } else {
+      sessionStorage.setItem("loggedRanges", JSON.stringify({}));
+      console.log("Initialized empty loggedRanges.");
+    }
+  }
+}
+
+
+
   </script>
 </head>
 <body>
-  <h2 id="welcome">Loading...</h2>
+  <div id="loadingOverlay" style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255);
+  display: flex; /* Make sure this is visible initially */
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 9999;">
+  <div class="spinner"></div>
+  <div style="margin-top: 15px; font-family: sans-serif; font-size: 1.2em;">
+    Loading Account...
+  </div>
+</div>
+<div id="mainContent" style="display: none;">
+  <h2 id="welcome">Loading...</h2> 
   <div id="sidebar">
     <div id="worldList"></div>
   </div>
-  <button id="newWorldButton" class="option" style="display:none;" onclick="createNewWorld()">Create New World</button>
+  <button id="newWorldButton" class="option" onclick="createNewWorld()">Create New World</button>
+</div>
+
 </body>
 </html>

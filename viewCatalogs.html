@@ -498,114 +498,59 @@
 
 
     function showEntityDetails(catalog, entityName) {
-      google.script.run.withSuccessHandler((entityData) => {
-        window.cache.entityData[entityName] = entityData;
-        const modal = document.getElementById("viewEntityModal");
-        const nameDisplay = document.getElementById("viewEntityName");
-        const attributesList = document.getElementById("entityAttributesList");
-        const occurrencesList = document.getElementById("entityOccurencesList");
+  google.script.run.withSuccessHandler((entityData) => {
+    window.cache.entityData[entityName] = entityData;
+    const modal = document.getElementById("viewEntityModal");
+    const nameDisplay = document.getElementById("viewEntityName");
+    const attributesList = document.getElementById("entityAttributesList");
+    const occurrencesList = document.getElementById("entityOccurencesList");
 
-        // Default summary text
-        document.getElementById("summaryContent").innerText = "Loading summary...";
-        // Pull summary or generate summary
-        google.script.run.withSuccessHandler(function(description) {
-          if (description){
-            console.log('Description is already in database');
-            document.getElementById("summaryContent").innerText = description;
+    document.getElementById("summaryContent").innerText = "Loading summary...";
+    google.script.run.withSuccessHandler(function(description) {
+      if (description) {
+        document.getElementById("summaryContent").innerText = description;
+      } else {
+        google.script.run.withSuccessHandler(function(summary) {
+          document.getElementById("summaryContent").innerText = summary || "No summary available.";
+          if (summary) {
+            google.script.run.updateCatalogEntity(catalog, entityName, { Description: { stringValue: summary } });
           }
-          else {
-            console.log('Description is not in database');
-            //Run summarize and update summaryContent when done
-            google.script.run.withSuccessHandler(function(summary) {
-              document.getElementById("summaryContent").innerText = summary || "No summary available.";
-              if(summary) {
-                console.log("Generated summary");
-                google.script.run.updateCatalogEntity(catalog, entityName, {Description: {stringValue : summary}});
-                console.log('Updated description in database');
-              }
-              console.log("Post summary check");
-            }).summarizeCharacter(entityName);
-          }
-        }).getSummary(catalog, entityName);
+        }).summarizeCharacter(entityName);
+      }
+    }).getSummary(catalog, entityName);
 
-        modal.setAttribute("data-entity", entityName);
-        modal.setAttribute("data-catalog", catalog);
+    modal.setAttribute("data-entity", entityName);
+    modal.setAttribute("data-catalog", catalog);
+    nameDisplay.textContent = `${entityName}`;
 
-        // nameDisplay.textContent = `Catalog: ${catalog} — ${entityName}`;
-        nameDisplay.textContent = `${entityName}`;
+    attributesList.innerHTML = "";
+    occurrencesList.innerHTML = "";
 
-        // Clear previous
-        attributesList.innerHTML = ""; 
-        occurrencesList.innerHTML = "";
-
-        if (!entityData || Object.keys(entityData).length === 0) {
-          attributesList.innerHTML = "<li>No data available</li>";
-          occurrencesList.innerHTML = "<li>No data available</li>";
-        } else {
-          const attributesOrder = [
-            "HairColor",
-            "EyeColor",
-            "SkinColor",
-            "Weight",
-            "Build",
-            "DistinctFeatures",
-            "Height",
-            // "Name",
-            "Gender",
-            "Age",
-            "Nationality",
-            "Aliases",
-            "Accessories"
-          ];
-
-          const occurencesOrder = [
-            "StoryAppearances"
-          ];
-
-          attributesOrder.forEach((key) => {
-            if (entityData.hasOwnProperty(key)) {
-              const li = document.createElement("li");
-              let value = entityData[key];
-
-              // Format arrays
-              if (Array.isArray(value)) {
-                value = value.join(", ");
-              }
-
-              const formattedKey = key
-                // reformats 'camelCase' to 'Camel Case'
-                .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space
-                .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
-
-              li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
-              attributesList.appendChild(li);
-            }
-          });
-
-          occurencesOrder.forEach((key) => {
-            if (entityData.hasOwnProperty(key)) {
-              const li = document.createElement("li");
-              let value = entityData[key];
-
-              // Format arrays
-              if (Array.isArray(value)) {
-                value = value.join(", ");
-              }
-
-              const formattedKey = key
-                // reformats 'camelCase' to 'Camel Case'
-                .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space
-                .replace(/^./, (char) => char.toUpperCase()); // Capitalize first letter
-
-              li.innerHTML = `<strong>${formattedKey}:</strong> ${value}`;
-              occurrencesList.appendChild(li);
-            }
-          });
-        }
-
-        modal.style.display = "block";
-      }).getCatalogEntity(catalog, entityName); 
+    if (!entityData || Object.keys(entityData).length === 0) {
+      attributesList.innerHTML = "<li>No data available</li>";
+      occurrencesList.innerHTML = "<li>No data available</li>";
+    } else {
+      const mentions = entityData.NarrativeMentions || [];
+      mentions.forEach((mention, index) => {
+        const rangeId = mention.rangeId || mention.anchorId || "";
+        const excerpt = mention.excerpt || "(No excerpt)";
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>Mention ${index + 1}:</strong> ${excerpt} 
+          <button onclick="goToNamedRange('${rangeId}')">Go to</button>`;
+        occurrencesList.appendChild(li);
+      });
     }
+
+    modal.style.display = "block";
+  }).getCatalogEntity(catalog, entityName);
+}
+
+function goToNamedRange(rangeId) {
+  google.script.run.withSuccessHandler(() => {
+    console.log("Navigated to named range:", rangeId);
+  }).navigateToNamedRange(rangeId);
+}
+
 
 
     function openTab(evt, tabInfo) {
