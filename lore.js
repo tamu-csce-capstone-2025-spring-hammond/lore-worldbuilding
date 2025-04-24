@@ -78,64 +78,18 @@ function installAddon() {
   onOpen();
 }
 
-// function findProperNouns() {
-//   var doc = DocumentApp.getActiveDocument();
-//   var text = doc.getBody().getText();
-
-//   // Regular expression to match proper nouns while allowing multi-word names
-//   var properNounRegex = /(?<![.!?]\s|^|")\b(?:Mr|Ms|Mrs|Dr|Prof)\.\s[A-Z][a-z]+(?:[\s|-][A-Z][a-z]+)*\b|(?<![.!?]\s|^|")\b[A-Z][a-z]+(?:[\s|-][A-Z][a-z]+)*\b/gm;
-//   var titleNounRegex = /(?<![.!?]\s|^|")\b(?:Mr|Ms|Mrs|Dr|Prof)\.\s[A-Z][a-z]+(?:\s(?:of|the|van|von|de|du|del|la|le|da|di|der|den|ter|ten))\s[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b|(?<![.!?]\s|^|")\b[A-Z][a-z]+(?:\s(?:of|the|van|von|de|du|del|la|le|da|di|der|den|ter|ten))\s[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b/gm;
-
-//   // Match proper nouns in the text
-//   console.log("Finding proper nouns...");
-//   var matches = text.match(properNounRegex) || [];
-
-//   console.log("Finding title proper nouns...")
-//   var titleMatches = text.match(titleNounRegex) || [];
-
-//   // List of words to exclude (honorifics, common words)
-//   var excludeWords = new Set([
-//     "I", "She", "He", "You", "The",
-//     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
-//     "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
-//   ]);
-
-//   var uniqueProperNouns = new Set();
-//   var baseNames = new Map();
-
-//   var allMatches = matches.concat(titleMatches);
-
-//   console.log("Eliminating duplicates...");
-//   allMatches.forEach(name => {
-//     if (!excludeWords.has(name)) {
-//       var nameParts = name.split(/\s|-/);
-//       var baseName = nameParts[nameParts.length - 1]; 
-//       // Get the last word as the base name
-
-//       if (baseNames.has(baseName)) {
-//         // If the base name already exists with a title, prefer the longer full name
-//         if (name.length > baseNames.get(baseName).length) {
-//           uniqueProperNouns.delete(baseNames.get(baseName)); // Remove the shorter one
-//           uniqueProperNouns.add(name);
-//           baseNames.set(baseName, name);
-//         }
-//       } else {
-//         // Add new entry
-//         uniqueProperNouns.add(name);
-//         baseNames.set(baseName, name);
-//       }
-//     }
-//   });
-
-//   return uniqueProperNouns.size ? [...uniqueProperNouns] : ["None"];
-// }
-
 function findProperNouns() {
   const doc = DocumentApp.getActiveDocument();
   const text = doc.getBody().getText();
 
-  const properNounRegex = /\b(?:Mr|Ms|Mrs|Dr|Prof)\.\s[A-Z][a-z]+(?:[\s-][A-Z][a-z]+)*\b|\b[A-Z][a-z]+(?:[\s-][A-Z][a-z]+)*\b/gm;
-  const matches = text.match(properNounRegex) || [];
+  const properNounRegex = /(?<![.!?]\s|^|")\b(?:Mr|Ms|Mrs|Dr|Prof)\.\s[A-Z][a-z]+(?:[\s|-][A-Z][a-z]+)*\b|(?<![.!?]\s|^|")\b[A-Z][a-z]+(?:[\s|-][A-Z][a-z]+)*\b/gm;
+  const propMatches = text.match(properNounRegex) || [];
+
+  var titleNounRegex = /(?<![.!?]\s|^|")\b(?:Mr|Ms|Mrs|Dr|Prof)\.\s[A-Z][a-z]+(?:\s(?:of|the|van|von|de|du|del|la|le|da|di|der|den|ter|ten))\s[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b|(?<![.!?]\s|^|")\b[A-Z][a-z]+(?:\s(?:of|the|van|von|de|du|del|la|le|da|di|der|den|ter|ten))\s[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b/gm;
+  var titleMatches = text.match(titleNounRegex) || [];
+
+  matches = propMatches.concat(titleMatches);
+
 
   const excludeWords = new Set([
     "I", "She", "He", "You", "It", "We", "They", "The", "Page", "Table", "Section",

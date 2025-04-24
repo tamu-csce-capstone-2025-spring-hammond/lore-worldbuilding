@@ -24,15 +24,15 @@
     color: white;
     padding: 8px 12px;
     border-radius: 8px;
-    border: 1px solid #839b91;
-    background-color: #9fafa1;
+    border: 1px solid var(--accent-color-hover);
+    background-color: var(--accent-color);
     cursor: pointer;
     border: none;
     display: inline-block;
   }
 
   .button-group button:hover {
-    background-color: #839b91;
+    background-color: var(--accent-color-hover);
   }
 
   .back-btn-container {
@@ -49,8 +49,13 @@
 
   #searchBar {
     flex: 1;
-    padding: 6px 10px;
+    padding: 10px 7px;
     font-size: 14px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+    border: 2px solid var(--accent-color);
+    margin-bottom:10px;
   }
 
   </style>

@@ -4,6 +4,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <script>
+      // Get the accent color dynamically
+      var accentColors = <?!= JSON.stringify(getAccentColor()) ?>;
+      var fSize = <?!= JSON.stringify(getFontSize()) ?>;
+
+      // Set the CSS variables
+      document.documentElement.style.setProperty('--accent-color', accentColors.color);
+      document.documentElement.style.setProperty('--accent-color-hover', accentColors.hover);
+      document.documentElement.style.setProperty('--font-size', fSize);
+    </script>
+
     <?!= include('viewCatalogsStyles'); ?>
     <?!= include('defaultStyles'); ?>
 
@@ -153,6 +164,7 @@
         let addButton = document.getElementById("addEntity");
         if (!addButton) {
           addButton = document.createElement("li");
+          addButton.fontSize = fSize;
           addButton.id = "addEntity";
           addButton.textContent = "Add an Entity";
           addButton.onclick = () => showAddEntity();
@@ -287,18 +299,17 @@
           displayCatalogData(catalog, { data: window.cache.catalogData[catalog] });
         }
 
-        
-        const worldId = localStorage.getItem("worldId") || "default";
-        sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(window.cache));
-
-
-        //Also clear entity-specific cache
+        // Also clear entity-specific cache
         delete window.cache.entityData[entityName];
         delete window.cache.radarData[entityName];
 
-        closeModal("viewEntityModal"); // Hide modal immediately
+        // Persist updated cache to session and local storage
+        sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(window.cache));
+        localStorage.setItem(`existingEntities-${worldId}`, JSON.stringify(window.cache.existingEntities));
 
-        //Firestore call still happens in background
+        closeModal("viewEntityModal");
+
+        // Firestore call still happens in background
         google.script.run.withSuccessHandler(() => {
           console.log(`Deleted ${entityName} from ${catalog}`);
         }).deleteCatalogEntity(catalog, entityName);
@@ -587,7 +598,7 @@ function goToNamedRange(rangeId) {
       }
     }
 
-    function loadRadarChart(entityName) {
+    /* function loadRadarChart(entityName) {
       if (window.cache.radarData[entityName]) {
         console.log("Using cached radar data for:", entityName);
         renderChart(window.cache.radarData[entityName]);
@@ -602,7 +613,47 @@ function goToNamedRange(rangeId) {
           })
           .getCharacterPersonalityComparison(entityName);
       }
+    } */
+
+    function loadRadarChart(entityName) {
+      const canvas = document.getElementById("radarChart");
+
+      // Clear previous chart visually and internally
+      if (canvas.chartInstance) {
+        canvas.chartInstance.destroy();
+        delete canvas.chartInstance;
+      }
+
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Optional: display temporary text or loader
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#aaa";
+      ctx.fillText("Loading chart...", canvas.width / 4, canvas.height / 2);
+
+      // Fetch new trait data
+      google.script.run
+        .withSuccessHandler(function(traits) {
+          if (!traits) {
+            alert("Could not infer personality traits.");
+            return;
+          }
+
+          const formatted = { current: {} };
+          for (const trait in traits) {
+            formatted.current[trait] = { integerValue: traits[trait] };
+          }
+
+          renderChart(formatted);
+        })
+        .withFailureHandler(function(error) {
+          console.error("Error inferring personality traits:", error);
+          alert("Error generating trait data.");
+        })
+        .inferPersonalityTraits(entityName);
     }
+
 
     
     window.onload = loadCatalogs; 
@@ -624,7 +675,15 @@ function goToNamedRange(rangeId) {
     </div>
    
     <h1>Choose a Catalog to Display:</h1>
-    <input type="text" id="searchInput" onkeyup="filterCatalogs()" placeholder="Search catalogs...">
+    <div class="search-container">
+      <input type="text" id="entitySearchInput" placeholder="Search for an entity..." oninput="filterSearchDropdown()">
+      <div id="entityDropdown" class="dropdown-content"></div>
+      <!--<div class="search-btn-wrapper">
+        <button class="accent-btn" onclick="goToEntityFromSearch()">Go</button>
+      </div>-->
+    </div>
+
+
 
     <ul id = "catalogList">
       <li id="addEntity" onclick="showAddEntity()">Add an Entity</li>
@@ -707,13 +766,66 @@ function goToNamedRange(rangeId) {
     </div>
 
     <script>
-      function renderChart(data) {
+
+      //Funcion to search using Cache quickly
+      function filterSearchDropdown() {
+        const input = document.getElementById("entitySearchInput").value.toLowerCase();
+        const dropdown = document.getElementById("entityDropdown");
+
+        dropdown.innerHTML = "";
+
+        const allEntities = Object.values(window.cache.catalogData).flat();
+        const matches = allEntities.filter(name => name.toLowerCase().includes(input));
+
+        if (matches.length === 0 || input.trim() === "") {
+          dropdown.style.display = "none";
+          return;
+        }
+
+        matches.forEach(name => {
+          const item = document.createElement("div");
+          item.textContent = name;
+          item.onclick = () => {
+            document.getElementById("entitySearchInput").value = name;
+            dropdown.style.display = "none";
+            goToEntityFromSearch();
+            document.getElementById("entitySearchInput").value = ""
+          };
+          dropdown.appendChild(item);
+        });
+
+        dropdown.style.display = "block";
+      }
+
+      function findCatalogForEntity(name) {
+        for (const catalog in window.cache.catalogData) {
+          if (window.cache.catalogData[catalog].includes(name)) {
+            return catalog;
+          }
+        }
+        return null;
+      }
+
+
+      function goToEntityFromSearch() {
+        const name = document.getElementById("entitySearchInput").value;
+        const catalog = findCatalogForEntity(name);
+        if (catalog && name) {
+          showEntityDetails(catalog, name);
+        } else {
+          alert("Entity not found in any catalog.");
+        }
+      }
+
+
+      /*function renderChart(data) {
         console.log("Radar chart data received:", data);
 
         if (!data || !data.initial || !data.current) {
           console.error("Missing initial or current personality trait data.");
           return;
         }
+
 
         const initial = data.initial;
         const current = data.current;
@@ -745,6 +857,62 @@ function goToNamedRange(rangeId) {
               {
                 label: 'Current',
                 data: currentValues,
+                fill: true,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+              }
+            ]
+          },
+          options: {
+            scales: {
+              r: {
+                beginAtZero: true,
+                min: 0,
+                max: 100
+              }
+            }
+          }
+        });
+      }*/
+
+      function renderChart(data) {
+        if (!data || !data.current) {
+          console.error("Missing current personality trait data.");
+          return;
+        }
+
+        const traitsMap = data.current;
+
+        // Defensive check to ensure it's not null
+        if (!traitsMap || typeof traitsMap !== 'object') {
+          console.error("Trait map is invalid:", traitsMap);
+          return;
+        }
+
+        const labels = Object.keys(traitsMap);
+        const values = labels.map(trait => {
+          const traitObj = traitsMap[trait];
+          return traitObj && traitObj.integerValue !== undefined
+            ? parseInt(traitObj.integerValue)
+            : 50; // fallback if something's missing
+        });
+
+        const canvas = document.getElementById('radarChart');
+        const ctx = canvas.getContext('2d');
+
+        if (canvas.chartInstance) {
+          canvas.chartInstance.destroy();
+        }
+
+        canvas.chartInstance = new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Current',
+                data: values,
                 fill: true,
                 backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 borderColor: 'rgba(54, 162, 235, 1)',

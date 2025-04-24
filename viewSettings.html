@@ -2,58 +2,70 @@
 <html>
   <head>
     <base target="_top">
+    <script>
+      // Get the accent color dynamically
+      var accentColors = <?!= JSON.stringify(getAccentColor()) ?>;
+      var fSize = <?!= JSON.stringify(getFontSize()) ?>;
+
+      // Set the CSS variables
+      document.documentElement.style.setProperty('--accent-color', accentColors.color);
+      document.documentElement.style.setProperty('--accent-color-hover', accentColors.hover);
+      document.documentElement.style.setProperty('--font-size', fSize);
+    </script>
     <?!= include('defaultStyles'); ?>
     <?!= include('viewSettingsStyles'); ?>
   </head>
   <body>
     <div class="back-btn-container">
-      <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
+      <a href="#" id="back-btn1" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
     </div>
 
 
     <h1>Accent Color:</h1>
     <div class="button-container">
       <!-- Button 1: green -->
-      <button class="accent-btn" style="background-color: #64b579" onclick="saveColor('#64b579', '#64b579')"> </button>
+      <button class="accent-btn" style="background-color: #64b579" onclick="saveColor('#64b579', '#3a784b')"> </button>
 
       <!-- Button 2 blue -->
-      <button class="accent-btn" style="background-color: #8dafb8" onclick="saveColor('#8dafb8', '#8dafb8')"> </button>
+      <button class="accent-btn" style="background-color: #8dafb8" onclick="saveColor('#8dafb8', '#58828d')"> </button>
 
       <!-- Button 3 red --> 
-      <button class="accent-btn" style="background-color: #c9807b" onclick="saveColor('#c9807b', '#c9807b')"> </button>
+      <button class="accent-btn" style="background-color: #c9807b" onclick="saveColor('#c9807b', '#b5514a')"> </button>
 
       <!-- Button 4 yellow-->
-      <button class="accent-btn" style="background-color: #e8db7b" onclick="saveColor('#e8db7b', '#e8db7b')"> </button>
+      <button class="accent-btn" style="background-color: #9fafa1" onclick="saveColor('#9fafa1', '#839b91')"> </button>
 
       <!-- Button 5 purple-->
-      <button class="accent-btn" style="background-color: #a28db8" onclick="saveColor('#a28db8', '#a28db8')"> </button>
+      <button class="accent-btn" style="background-color: #a28db8" onclick="saveColor('#a28db8', '#7f629d')"> </button>
+
+      <!-- Button 6 orange-->
+      <button class="accent-btn" style="background-color: #ECAFC1" onclick="saveColor('#ECAFC1', '#EC7BA6')"> </button>
+
+      <!-- Button 7 gray-->
+      <button class="accent-btn" style="background-color: #E1E6B8" onclick="saveColor('#E1E6B8', '#C6CAA2')"> </button>
     </div>
 
-    <h1> Sort Entities By: </h1>
-    <select id="catalogDropdown">
-      <option value="catalog1">Number of Occurences</option>
-      <option value="catalog2">Alphabetically</option>
-      <option value="catalog3">Newest Entities</option>
-    </select>
-
-    <!--
-    <h1> Add New Entity Type: </h1>
-    <div class="input-container">
-      <input type="text" id="newInput" placeholder="Enter something...">
-      <button id="addButton" onclick="addItem()">+</button>
+    <div class="other-container">
+      <h1> Sort Entities By: </h1>
+      <select class="entityDropdown">
+        <option value="catalog1">Number of Occurences</option>
+        <option value="catalog2">Alphabetically</option>
+        <option value="catalog3">Newest Entities</option>
+      </select>
     </div>
-    -->
 
-    <h1> Font Size: </h1>
-    <div class="button-container">
-      <!-- Button 1: green -->
-      <button class="accent-btn" style="font-size: 16px" onClick="changeFontSize(16)"> aA </button>
+    <div class="other-container">
+      <h1> Font Size: </h1>
+      <div class="button-container">
+        <!-- Button 1: green -->
+        <button class="accent-btn" style="font-size: 16px" onClick="saveFont(16)"> aA </button>
 
-      <!-- Button 2 blue -->
-      <button class="accent-btn" style="font-size: 24px" onClick="changeFontSize(24)"> aA </button>
+        <!-- Button 2 blue -->
+        <button class="accent-btn" style="font-size: 24px" onClick="saveFont(24)"> aA </button>
 
-      <!-- Button 3 red --> 
-      <button class="accent-btn" style="font-size: 32px" onClick="changeFontSize(32)"> aA </button>
+        <!-- Button 3 red --> 
+        <button class="accent-btn" style="font-size: 30px" onClick="saveFont(30)"> aA </button>
+      </div>
     </div>
 
     <script>
@@ -63,6 +75,15 @@
         google.script.run
           .withSuccessHandler()
           .changeAccentColor(color, accentcolor);
+        document.getElementById("back-btn1").style.backgroundColor = color;
+      }
+
+      function saveFont(fsize){
+        console.log("Changing font size to " + fsize);
+        google.script.run
+          .withSuccessHandler()
+          .changeFontSize(fsize);
+        document.getElementById("back-btn1").style.fontSize = fsize + "px";
       }
 
       function navigateTo(page) {

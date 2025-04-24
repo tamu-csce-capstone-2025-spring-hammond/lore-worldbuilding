@@ -2,6 +2,17 @@
 <html>
 <head>
   <base target="_top">
+  <script>
+    // Get the accent color dynamically
+    var accentColors = <?!= JSON.stringify(getAccentColor()) ?>;
+    var fSize = <?!= JSON.stringify(getFontSize()) ?>;
+
+    // Set the CSS variables
+    document.documentElement.style.setProperty('--accent-color', accentColors.color);
+    document.documentElement.style.setProperty('--accent-color-hover', accentColors.hover);
+    document.documentElement.style.setProperty('--font-size', fSize);
+  </script>
+
   <?!= include('defaultStyles'); ?>
   <?!= include('loginStyle'); ?>
   
@@ -32,61 +43,63 @@
   };
 
   function showUserDashboard(user) {
-    hideLoading();
-    currentUser = user;
-    //Set persistent data!
-    loreState.setUID(user.uid);
-    document.getElementById("welcome").textContent =
-      `Welcome to LORE, ${user.email}`;
+  hideLoading();
+  currentUser = user;
+  loreState.setUID(user.uid);
 
-    const worldList = document.getElementById("worldList");
-    worldList.innerHTML = "";
+  console.log("Received user object:", user);
+  document.getElementById("welcome").textContent = `Welcome to LORE, ${user.email}`;
 
-    if (user.worlds.length === 0) {
-      worldList.innerHTML = "<p>You have no worlds yet.</p>";
-    } else {
-        user.worlds.forEach(world => {
-          const card = document.createElement("div");
-          card.className = "world-card";
+  const worldList = document.getElementById("worldList");
+  worldList.innerHTML = "";
 
-          const title = document.createElement("h3");
-          title.textContent = world.name;
+  if (!user.worlds || user.worlds.length === 0) {
+    worldList.innerHTML = "<p>You have no worlds yet.</p>";
+  } else {
+    user.worlds.forEach(world => {
+      try {
+        const card = document.createElement("div");
+        card.className = "world-card";
 
-          const desc = document.createElement("p");
-          desc.textContent = world.description;
+        const title = document.createElement("h3");
+        title.textContent = world.name || "(Unnamed World)";
+        const desc = document.createElement("p");
+        desc.textContent = world.description || "";
 
-          const buttonGroup = document.createElement("div");
-          buttonGroup.className = "button-group";
+        const buttonGroup = document.createElement("div");
+        buttonGroup.className = "button-group";
 
-          const enterBtn = document.createElement("button");
-          enterBtn.textContent = "Enter";
-          enterBtn.onclick = () => selectWorld(world.id);
+        const enterBtn = document.createElement("button");
+        enterBtn.textContent = "Enter";
+        enterBtn.onclick = () => selectWorld(world.id);
 
-          const editBtn = document.createElement("button");
-          editBtn.textContent = "Edit";
-          editBtn.onclick = () => editWorld(world.id, world.name, world.description);
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => editWorld(world.id, world.name, world.description);
 
-          const deleteBtn = document.createElement("button");
-          deleteBtn.textContent = "Delete";
-          deleteBtn.onclick = () => deleteWorldFrontend(world.id);
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.onclick = () => deleteWorldFrontend(world.id);
 
-          buttonGroup.appendChild(enterBtn);
-          buttonGroup.appendChild(editBtn);
-          buttonGroup.appendChild(deleteBtn);
+        buttonGroup.appendChild(enterBtn);
+        buttonGroup.appendChild(editBtn);
+        buttonGroup.appendChild(deleteBtn);
 
-          card.appendChild(title);
-          card.appendChild(desc);
-          card.appendChild(buttonGroup);
+        card.appendChild(title);
+        card.appendChild(desc);
+        card.appendChild(buttonGroup);
 
-          document.getElementById("worldList").appendChild(card);
-        });
-        document.getElementById("newWorldButton").style.display = "block";
-        document.getElementById("mainContent").style.display = "block"; 
-
-    }
-
-    document.getElementById("newWorldButton").style.display = "block";
+        worldList.appendChild(card);
+      } catch (e) {
+        console.error("Error rendering world:", world, e);
+      }
+    });
   }
+
+  //ALWAYS show main content and button
+  document.getElementById("newWorldButton").style.display = "block";
+  document.getElementById("mainContent").style.display = "block";
+}
 
   //Function that runs when selecting a world
   // - worldId: a string representing the worldID
@@ -198,7 +211,9 @@ function initializeSessionCache(worldId) {
   const catalogsKey = `catalogsList-${worldId}`;
   const existingKey = `existingEntities-${worldId}`;
   const ignoredKey = `ignoredEntities-${worldId}`;
-  console.log("📦 Attempting to fetch from Firestore with worldId:", worldId);
+
+  console.log("Attempting to fetch from Firestore with worldId:", worldId);
+
 
   if (!sessionStorage.getItem(cachedKey)) {
     const localFallback = localStorage.getItem(cachedKey);
@@ -219,7 +234,9 @@ function initializeSessionCache(worldId) {
         localStorage.setItem(existingKey, JSON.stringify(fallbackData.existingEntities));
         localStorage.setItem(ignoredKey, JSON.stringify(fallbackData.ignoredEntities));
         console.log("Restored cachedData from Firestore.");
-      }).loadCatalogDataFromFirestore(worldId); // ⬅️ You’ll create this backend function
+
+      }).loadCatalogDataFromFirestore(worldId); 
+
     }
   }
 
