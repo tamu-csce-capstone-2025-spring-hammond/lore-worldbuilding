@@ -3,9 +3,11 @@
   @import url('https://fonts.googleapis.com/css2?family=Macondo+Swash+Caps&family=Nanum+Gothic&display=swap');
   @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap');
 
+  
+
   // FONTS
   html {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   // default font
@@ -62,31 +64,35 @@
   }
 
   p {
-    font-size: 14px;
+    font-size: var(--font-size);
     color: #3c4a3e;
+  }
+
+  span {
+    font-size: var(--font-size);
   }
 
   .continue-btn {
     margin-top: 20px;
-    background-color: #95b1ee;
+    background-color: var(--accent-color);
     color: white;
     border: none;
     padding: 10px 20px;
-    font-size: 16px;
+    font-size: var(--font-size);
     cursor: pointer;
     border-radius: 5px;
   }
   
   .continue-btn:hover {
-    background-color: #95b1ee;
+    background-color: var(--accent-color-hover);
   }
 
   .back-btn {
-    background-color: #9fafa1;
+    background-color: var(--accent-color);
     color: white;
     border: none;
     padding: 10px 20px;
-    font-size: 16px;
+    font-size: var(--font-size);
     cursor: pointer;
     border-radius: 5px;
     margin: 10px;
@@ -94,7 +100,7 @@
   }
 
   .back-btn:hover {
-    background-color: #839b91;
+    background-color: var(--accent-color-hover);
   }
 
   .back-btn-container {
@@ -115,10 +121,11 @@
   .option {
     width: 60%;
     max-width: 300px;
-    background-color: #9fafa1;
+    background-color: var(--accent-color);
     color: white;
     padding: 15px;
     margin: 10px;
+    font-size: var(--font-size);
     text-align: center;
     cursor: pointer;
     border-radius: 8px;
@@ -128,7 +135,7 @@
   }
 
   .option:hover {
-    background-color: #839b91;
+    background-color: var(--accent-color-hover);
   }
 
   // handles how pop ups (modals) are displayed
@@ -202,10 +209,24 @@
   select, input, button {
     margin-top: 10px;
     padding: 5px;
-    font-size: 16px;
+    font-size: var(--font-size);
     width: 100%; /* Make inputs fit inside modal */
     max-width: 350px; /* Prevents them from overflowing */
     box-sizing: border-box; /* Prevents width issues */
+  }
+
+    .spinner {
+    border: 6px solid #ccc;
+    border-top: 6px solid #4e73df;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
   
 </style>

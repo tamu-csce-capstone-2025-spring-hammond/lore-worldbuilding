@@ -28,7 +28,10 @@ function deleteEntity(catalog, entity, listItem) {
 function deleteCatalogEntity(catalog, entity){
   //catalog = "Characters";
   //entity - "Test"
-  var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entity);
+  removeExistingEntity(entity);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entity)}`;
+  var url = FIREBASE_URL + path;
 
   var options = {
     method: "delete",
@@ -59,7 +62,9 @@ function deleteCatalogEntity(catalog, entity){
 // - entityName: Name of Entity
 function addCatalogEntity(catalog, entityName) {
   addExistingEntity(entityName); // adds entity name to list of all entity names
-  var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
 
   // Base fields that all collections share
   var fields = {
@@ -89,7 +94,7 @@ function addCatalogEntity(catalog, entityName) {
     Accessories: { arrayValue: { values: [] } },
 
     //New field: PersonalityTraits (all start at neutral 50)
-    PersonalityTraits: {
+    InitialPersonalityTraits: {
       mapValue: {
         fields: {
           Honesty:         { integerValue: 50 },
@@ -105,6 +110,23 @@ function addCatalogEntity(catalog, entityName) {
         }
       }
     },
+    CurrentPersonalityTraits: {
+      mapValue: {
+        fields: {
+          Honesty:         { integerValue: 50 },
+          Creativity:      { integerValue: 50 },
+          Dominance:       { integerValue: 50 },
+          Optimism:        { integerValue: 50 },
+          Extroversion:    { integerValue: 50 },
+          Logic:           { integerValue: 50 },
+          Selfishness:     { integerValue: 50 },
+          Forgiveness:     { integerValue: 50 },
+          Humility:        { integerValue: 50 },
+          Discipline:      { integerValue: 50 }
+        }
+      }
+    },
+
     
     //Associated Entities
     AssociatedEvents: {
@@ -166,8 +188,9 @@ function updateCatalogEntity(collection, documentId, updateData) {
     Authorization: "Bearer " + getAccessToken(),
     "Content-Type": "application/json"
   };
-
-  const originalUrl = FIREBASE_URL + collection + "/" + encodeURIComponent(documentId);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${collection}/${encodeURIComponent(documentId)}`;
+  const originalUrl = FIREBASE_URL + path;
 
   //Check if name is being updated (implies renaming the document ID)
   const newName = updateData.Name?.stringValue;
@@ -195,7 +218,9 @@ function updateCatalogEntity(collection, documentId, updateData) {
       originalFields[key] = updateData[key];
     }
 
-    const newUrl = FIREBASE_URL + collection + "/" + encodeURIComponent(newName);
+    const newPath = `Users/${uid}/Worlds/${worldId}/${collection}/${encodeURIComponent(newName)}`;
+    const newUrl = FIREBASE_URL + newPath;
+
     const createOptions = {
       method: "PATCH",
       headers: headers,
@@ -251,7 +276,9 @@ function updateCatalogEntity(collection, documentId, updateData) {
 function getDocumentFields(collection, documentId) {
   //collection = "Characters";
   //documentId = "Bilbo";
-  var url = FIREBASE_URL + collection + "/" + encodeURIComponent(documentId);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${collection}/${encodeURIComponent(documentId)}`;
+  var url = FIREBASE_URL + path;
 
   var options = {
     method: "get",
@@ -282,7 +309,9 @@ function getDocumentFields(collection, documentId) {
 function getCatalogEntity(catalog, entityName) {
   //catalog = 'Characters';
   //entityName = 'Bilbo'
-  var url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  var url = FIREBASE_URL + path;
 
   var options = {
     method: "GET",
@@ -327,8 +356,9 @@ function getEntityAttribute(catalog, entityName, attribute) {
   //catalog = 'Characters';
   //entityName = 'test2';
   //attribute = 'PersonalityTraits';
-  var url = FIREBASE_URL + catalog + "/" + 
-  encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  var url = FIREBASE_URL + path;
 
   var options = {
     method: "GET",
@@ -359,19 +389,34 @@ function getEntityAttribute(catalog, entityName, attribute) {
   }
 }
 
-//Function to ADD where characters appear
-//Parameters:
-// - catalog: "Characters", "Events", etc.
-// - entityName: current name (used as document ID)
-// - page: string of page entity appears
-// - excerpt: string of excerpt from writing
-function logNarrativeMention(catalog, entityName, page, excerpt) {
-  //Example parameters:
-  //catalog = "Characters";
-  //entityName = "test2";
-  //page = "1";
-  //excerpt = "Testing narrative mention";
-  const url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
+function getSummary(catalog, entityName){
+  listOfAttributes = getCatalogEntity(catalog, entityName);
+  var description = listOfAttributes['Description'];
+  if (description) {
+    Logger.log(description);
+    return description;
+  }
+  else{
+    Logger.log('No summary');
+    return;
+  }
+}
+
+// Function to store narrative mention using a bookmark ID instead of a page number
+// Parameters:
+// - catalog: e.g. "Characters"
+// - entityName: document ID
+// - anchorId: ID of the bookmark
+// - excerpt: a snippet or phrase where the entity is mentioned
+function logNarrativeMentionWithRange(catalog, entityName, anchorId, excerpt) {
+  const { uid, worldId } = getUserContext();
+  console.log("Calling logging narrative mention");
+  //  catalog = "Characters";
+  //  entityName = "Princess Leia";
+  //  anchorId = "test-anchor-001";
+  //  excerpt = "Help me, Obi-Wan Kenobi. You’re my only hope.";
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
 
   const getOptions = {
     method: "GET",
@@ -389,14 +434,13 @@ function logNarrativeMention(catalog, entityName, page, excerpt) {
   const newMention = {
     mapValue: {
       fields: {
-        page: { stringValue: page },
+        rangeId: { stringValue: anchorId },
         excerpt: { stringValue: excerpt }
       }
     }
   };
 
   existing.push(newMention);
-
 
   const patchPayload = {
     fields: {
@@ -417,20 +461,102 @@ function logNarrativeMention(catalog, entityName, page, excerpt) {
   UrlFetchApp.fetch(patchUrl, patchOptions);
 }
 
+// Adds named ranges to character mentions (invisible in UI)
+function createNamedRangesForCharacter(entityName) {
+  const doc = DocumentApp.getActiveDocument();
+  const body = doc.getBody();
+  const existingNames = new Set(doc.getNamedRanges().map(nr => nr.getName()));
 
-//Function to UPDATE a narrative mention
-//Parameters:
-// - catalog: "Characters", "Events", etc.
-// - entityName: current name (used as document ID)
-// - index: the index of the narrative mention (String!)
-// - UpdatedExcerpt: new string of excerpt from writing
+  let result = body.findText(entityName);
+
+  while (result !== null) {
+    const element = result.getElement();
+    const paragraph = element.getParent();
+    const paragraphText = paragraph.getText().substring(0, 30).replace(/[^a-zA-Z0-9]/g, "_");
+    const rangeName = `mention_${entityName}_${paragraphText}`;
+
+    if (!existingNames.has(rangeName)) {
+      const range = doc.newRange().addElement(paragraph).build();
+      doc.addNamedRange(rangeName, range);  
+      Logger.log(`Created named range: ${rangeName}`);
+      existingNames.add(rangeName);
+    }
+
+    result = body.findText(entityName, result);
+  }
+}
+
+
+// Finds the closest named range for a mention of the entity
+function getAllNamedRangesForEntity(entityName) {
+  const doc = DocumentApp.getActiveDocument();
+  const body = doc.getBody();
+  const namedRanges = doc.getNamedRanges();
+
+  const results = [];
+  let result = body.findText(entityName);
+  
+  while (result !== null) {
+    const element = result.getElement();
+    const mentionParagraph = element.getParent();
+
+    for (const range of namedRanges) {
+      const rangeElements = range.getRange().getRangeElements();
+      if (!rangeElements || rangeElements.length === 0) continue;
+
+      const rangeElement = rangeElements[0].getElement();
+      if (rangeElement.getText() === mentionParagraph.getText()) {
+        const excerpt = element.getText().substring(result.getStartOffset(), result.getEndOffsetInclusive() + 1);
+        results.push({
+          rangeName: range.getName(),
+          excerpt: excerpt
+        });
+        break;
+      }
+    }
+
+    result = body.findText(entityName, result);
+  }
+
+  return results;
+}
+
+
+// Navigate to a named range by name
+function navigateToNamedRange(rangeName) {
+  const doc = DocumentApp.getActiveDocument();
+  const namedRanges = doc.getNamedRanges(rangeName);
+  if (namedRanges.length > 0) {
+    const range = namedRanges[0].getRange();
+    doc.setSelection(range);
+    Logger.log("Navigated to named range: " + rangeName);
+  } else {
+    Logger.log("Named range not found: " + rangeName);
+  }
+}
+
+function removeNamedRangesForEntity(entityName) {
+  const doc = DocumentApp.getActiveDocument();
+  const ranges = doc.getNamedRanges();
+  ranges.forEach(range => {
+    if (range.getName().startsWith(`mention_${entityName}_`)) {
+      doc.removeNamedRange(range);
+    }
+  });
+}
+
+
+
+// Updates an existing narrative mention by index
+// Parameters:
+// - catalog: e.g. "Characters"
+// - entityName: document ID
+// - index: index of the mention to update
+// - updatedExcerpt: new excerpt string
 function updateNarrativeMention(catalog, entityName, index, updatedExcerpt) {
-  //Example parameters:
-  //catalog = "Characters";
-  //entityName = "test2";
-  //index = "0";
-  //updatedExcerpt = "Testing update narrative mention";
-  const url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
 
   const getResponse = UrlFetchApp.fetch(url, {
     method: "GET",
@@ -445,7 +571,7 @@ function updateNarrativeMention(catalog, entityName, index, updatedExcerpt) {
 
   if (index < 0 || index >= mentions.length) return;
 
-  // Update the excerpt value
+  // Update the excerpt field
   mentions[index].mapValue.fields.excerpt = { stringValue: updatedExcerpt };
 
   const patchPayload = {
@@ -466,17 +592,15 @@ function updateNarrativeMention(catalog, entityName, index, updatedExcerpt) {
   });
 }
 
-//Function to REMOVE a narrative mention
-//Parameters:
-// - catalog: "Characters", "Events", etc.
-// - entityName: current name (used as document ID)
-// - index: the index of the narrative mention (String!)
+// Deletes a specific narrative mention by index
+// Parameters:
+// - catalog: e.g. "Characters"
+// - entityName: document ID
+// - indexToRemove: index of the mention to delete
 function deleteNarrativeMention(catalog, entityName, indexToRemove) {
-  //Example parameters:
-  //catalog = "Characters";
-  //entityName = "test2";
-  //indexToRemove = "0";
-  const url = FIREBASE_URL + catalog + "/" + encodeURIComponent(entityName);
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
 
   const getResponse = UrlFetchApp.fetch(url, {
     method: "GET",
@@ -491,7 +615,7 @@ function deleteNarrativeMention(catalog, entityName, indexToRemove) {
 
   if (indexToRemove < 0 || indexToRemove >= mentions.length) return;
 
-  mentions.splice(indexToRemove, 1); // remove mention at index
+  mentions.splice(indexToRemove, 1);
 
   const patchPayload = {
     fields: {
@@ -510,3 +634,80 @@ function deleteNarrativeMention(catalog, entityName, indexToRemove) {
     payload: JSON.stringify(patchPayload)
   });
 }
+
+
+//Function to GET the initial AND current personality of a character
+//Parameters:
+// - entityName: current name (used as document ID)
+function getCharacterPersonalityComparison(entityName) {
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/Characters/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
+
+  const response = UrlFetchApp.fetch(url, {
+    method: "get",
+    headers: {
+      Authorization: "Bearer " + getAccessToken()
+    }
+  });
+
+  const data = JSON.parse(response.getContentText());
+  return {
+    initial: data.fields.InitialPersonalityTraits.mapValue.fields,
+    current: data.fields.CurrentPersonalityTraits.mapValue.fields
+  };
+}
+
+//DEVELOPER FUNCTION
+function removeAllBookmarks() {
+  const doc = DocumentApp.getActiveDocument();
+  const bookmarks = doc.getBookmarks();
+  let removedCount = 0;
+
+  bookmarks.forEach(bookmark => {
+    bookmark.remove();  
+    removedCount++;
+  });
+
+  Logger.log(`Removed ${removedCount} bookmarks from the document.`);
+}
+
+function getLoggedRangeIds(catalog, entityName) {
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}/${encodeURIComponent(entityName)}`;
+  const url = FIREBASE_URL + path;
+
+  try {
+    const response = UrlFetchApp.fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: "Bearer " + getAccessToken(),
+        "Content-Type": "application/json"
+      },
+      muteHttpExceptions: true
+    });
+
+    const status = response.getResponseCode();
+    if (status !== 200) {
+      Logger.log(`Document not found or fetch failed for ${catalog}/${entityName}: ${status}`);
+      return [];
+    }
+
+    const doc = JSON.parse(response.getContentText());
+    const values = doc.fields?.NarrativeMentions?.arrayValue?.values || [];
+
+    const ids = values
+      .map(entry => entry.mapValue?.fields?.rangeId?.stringValue)
+      .filter(id => id); // filter out undefined/null
+
+    Logger.log(`Retrieved ${ids.length} existing range IDs for ${entityName} (${catalog})`);
+    return ids;
+  } catch (err) {
+    Logger.log(`Error in getLoggedRangeIds: ${err}`);
+    return [];
+  }
+}
+
+
+
+

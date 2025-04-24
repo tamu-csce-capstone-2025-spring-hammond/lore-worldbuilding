@@ -2,6 +2,17 @@
 <html>
   <head>
     <base target="_top">
+    <script>
+      // Get the accent color dynamically
+      var accentColors = <?!= JSON.stringify(getAccentColor()) ?>;
+      var fSize = <?!= JSON.stringify(getFontSize()) ?>;
+
+      // Set the CSS variables
+      document.documentElement.style.setProperty('--accent-color', accentColors.color);
+      document.documentElement.style.setProperty('--accent-color-hover', accentColors.hover);
+      document.documentElement.style.setProperty('--font-size', fSize);
+    </script>
+
     <?!= include('defaultStyles'); ?>
 
     <style>

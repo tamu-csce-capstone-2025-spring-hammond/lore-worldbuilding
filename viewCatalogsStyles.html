@@ -27,7 +27,7 @@
       justify-content: center;
       min-width: 250px; 
       max-width: 80%;
-      background-color: #9fafa1;
+      background-color: var(--accent-color);
       color: white;
       padding: 15px;
       margin: 5px;
@@ -41,7 +41,7 @@
   }
 
   #catalogList li:hover {
-    background-color: #839b91;
+    background-color: var(--accent-color-hover);
   }
 
   .character-name {
@@ -112,7 +112,7 @@
   }
 
   #backToLanding {
-    background-color: #9fafa1;
+    background-color: var(--accent-color);
     color: white;
     padding: 15px;
     margin-top: 10px;
@@ -126,10 +126,10 @@
   }
   
   #backToLanding:hover {
-      background-color: #839b91;
+      background-color: var(--accent-color-hover);
   }
 
-  #searchInput {
+  #entitySearchInput {
     margin: 0 auto;
     padding: 12px;
     width: 95%; 
@@ -137,7 +137,7 @@
     border-radius: 8px;
     box-sizing: border-box;
     transition: border-color 0.3s ease;
-    border: 2px solid #9fafa1; 
+    border: 2px solid var(--accent-color);
   }
 
   .tab {
@@ -157,23 +157,23 @@
     cursor: pointer;
     padding: 10px 11px;
     transition: 0.3s;
-    background-color: #9fafa1;
+    background-color: var(--accent-color);
     border-radius: 10px 10px 0 0;
     flex: 1;
   }
 
   .tab button:hover {
-    background-color: #839b91;
+    background-color: var(--accent-color-hover);
   }
 
   .tab button.active {
-    background-color: #839b91;
+    background-color: var(--accent-color-hover);
   }
 
   .tabcontent {
     display: none;
     padding: 6px 12px;
-    border: 1px solid #839b91;
+    border: 1px solid var(--accent-color-hover);
     border-top: none;
   }
 
@@ -184,6 +184,61 @@
     border-radius: 5px; 
     display: inline-block;
   }
+
+  .accent-btn {
+  font-family: 'DM Serif Display', serif;
+  background-color: var(--accent-color);
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+  display: inline-block;
+  width: fit-content; 
+  max-width: 200px;    
+}
+
+
+.accent-btn:hover {
+  background-color: var(--accent-color-hover);
+}
+
+.search-btn-wrapper {
+  text-align: center;
+  margin-top: 8px;
+}
+
+#entityDropdown {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+  background-color: white;
+  position: absolute;
+  width: 100%;
+  z-index: 999;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
+#entityDropdown div {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: 'Nanum Gothic', sans-serif;
+  transition: background-color 0.2s ease;
+}
+
+#entityDropdown div:hover {
+  background-color: #f0f0f0;
+}
+
+
+
+
+
+
 
 </style>
   

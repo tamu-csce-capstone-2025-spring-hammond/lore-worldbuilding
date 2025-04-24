@@ -40,14 +40,23 @@ function getActiveName() {
 function getAccentColor() {
   var cache = CacheService.getUserCache();
   var cachedColor = cache.get("accentColor");
-  console.log(cachedColor);
+  var cachedHover = cache.get("accentColorHover");
 
-  if (cachedColor) return cachedColor;
+  console.log(cachedColor);  // Debugging output
+
+  if (cachedColor && cachedHover) {
+    return { color: cachedColor, hover: cachedHover };  // Return as an object
+  }
 
   var userProperties = PropertiesService.getUserProperties();
-  var color = userProperties.getProperty("accentColor") || "#0000FF";
-  cache.put("accentColor", color, 21600);
-  return color;
+  var color = userProperties.getProperty("accentColor") || "#9fafa1";  // Default color
+  var hovercolor = userProperties.getProperty("accentColorHover") || "#839b91";  // Default hover color
+
+  // Cache the values
+  cache.put("accentColor", color, 21600);  // 6 hours in seconds
+  cache.put("accentColorHover", hovercolor, 21600);  // 6 hours in seconds
+
+  return { color: color, hover: hovercolor };  // Return as an object
 }
 
 function changeAccentColor(color, hovercolor){
@@ -63,12 +72,32 @@ function changeAccentColor(color, hovercolor){
   cache.put("accentColorHover", hovercolor, 21600);
 }
 
-function changeFontSize(size){
+function changeFontSize(fsize){
   var userProperties = PropertiesService.getUserProperties();
   var cache = CacheService.getUserCache();
 
   // store in PropertiesService (persistent storage)
-  userProperties.setProperty("fontsize", size);
+  cache.put("fontsize", fsize + "px", 21600); 
+  userProperties.setProperty("fontsize", fsize + "px");
+}
+
+function getFontSize(){
+  var cache = CacheService.getUserCache();
+  var fsize = cache.get("fontsize");
+
+  console.log(fsize); 
+
+  if (fsize) {
+    return fsize; 
+  }
+
+  var userProperties = PropertiesService.getUserProperties();
+  var fontsize = userProperties.getProperty("fontsize") || "16px";  // Default size
+
+  // Cache the values
+  cache.put("fontsize", fontsize, 21600);  // 6 hours in seconds
+
+  return fontsize;
 }
 
 function addIgnoredEntity(entityName) {
@@ -95,7 +124,7 @@ function addExistingEntity(entityName) {
   
   let existingArray = [];
   if (existing) {
-    existingArray = JSON.parse(ignored);
+    existingArray = JSON.parse(existing);
   }
 
   if (!existingArray.includes(entityName)) {
@@ -106,6 +135,35 @@ function addExistingEntity(entityName) {
   // return the updated list to the client
   return existingArray;
 }
+
+function removeExistingEntity(entityName) {
+  const userProperties = PropertiesService.getUserProperties();
+  const existing = userProperties.getProperty('existingEntities');
+  
+  let existingArray = [];
+  if (existing) {
+    existingArray = JSON.parse(existing);
+  }
+
+  const updatedArray = existingArray.filter(e => e !== entityName);
+
+  userProperties.setProperty('existingEntities', JSON.stringify(updatedArray));
+
+  return updatedArray;
+}
+
+function clearEntityTracking() {
+  const userProperties = PropertiesService.getUserProperties();
+  userProperties.deleteProperty('ignoredEntities');
+  userProperties.deleteProperty('existingEntities');
+  
+  return {
+    message: "Entity tracking reset.",
+    ignoredCleared: true,
+    existingCleared: true
+  };
+}
+
 
 
 

@@ -1,103 +1,254 @@
 <html>
   <head>
     <base target="_top">
+    <script>
+      // Get the accent color dynamically
+      var accentColors = <?!= JSON.stringify(getAccentColor()) ?>;
+      var fSize = <?!= JSON.stringify(getFontSize()) ?>;
+
+      // Set the CSS variables
+      document.documentElement.style.setProperty('--accent-color', accentColors.color);
+      document.documentElement.style.setProperty('--accent-color-hover', accentColors.hover);
+      document.documentElement.style.setProperty('--font-size', fSize);
+    </script>
     <?!= include('defaultStyles'); ?>
     <?!= include('viewWritingModeStyles'); ?>
   </head>
   <body>
     <div class="back-btn-container">
       <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
+      <input type="text" id="searchBar" placeholder="Search entities..." oninput="filterEntities()" />
     </div>
 
+    <div id="loading"> Loading... </div>
     <div id="container"></div>
 
-    <script>
-      function navigateTo(page) {
-        google.script.run.showPage(page);
-      }
+<script>
+  function determineCatalog(entityName) {
+  for (const catalog in window.cache.catalogData) {
+    if (window.cache.catalogData[catalog].includes(entityName)) {
+      return catalog;
+    }
+  }
+  return "Characters"; // fallback if not found
+}
 
-    document.addEventListener('DOMContentLoaded', function () {
-      function addNewDiv(entityName) {
-        const container = document.getElementById('container');
+  function navigateTo(page) {
+      google.script.run.showPage(page);
+    }
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'entity-container';
+  function loadTrackedRanges() {
+    const raw = sessionStorage.getItem("loggedRanges");
+    if (!raw) {
+      console.log("No existing loggedRanges cache found. Initializing empty structure.");
+      sessionStorage.setItem("loggedRanges", JSON.stringify({}));
+      return {};
+    }
+    const parsed = JSON.parse(raw);
+    const result = {};
+    for (const entity in parsed) {
+      result[entity] = new Set(parsed[entity]);
+    }
+    return result;
+  }
 
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = entityName;
+  function saveTrackedRanges(tracked) {
+    const obj = {};
+    for (const entity in tracked) {
+      obj[entity] = Array.from(tracked[entity]);
+    }
+    sessionStorage.setItem("loggedRanges", JSON.stringify(obj));
+  }
 
-        const buttonGroup = document.createElement('div');
-        buttonGroup.className = 'button-group';
+  function safeParse(key) {
+    try {
+      const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
+      if (!raw || raw === "undefined") return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      console.warn(`Failed to parse JSON for key: ${key}`, e);
+      return null;
+    }
+  }
 
-        const btn1 = document.createElement('button');
-        btn1.textContent = 'Character';
-        btn1.onclick = function () {
-          console.log("Adding character...");
-          google.script.run
-            .withSuccessHandler(() => {
-              wrapper.remove(); // remove the entire div after success
-            })
-            .addCatalogEntity('Characters', entityName);
-        };
+  const displayedEntities = new Set();
+  const trackedRanges = loadTrackedRanges();
+  const namedEntities = new Set();
+  const worldId = localStorage.getItem("worldId") || "default";
 
-        const btn2 = document.createElement('button');
-        btn2.textContent = 'Location';
-        btn2.onclick = function () {
-          google.script.run
-            .withSuccessHandler(() => {
-              wrapper.remove(); 
-            })
-            .addCatalogEntity('Locations', entityName);
-        };
+  const defaultCache = {
+    catalogData: {},
+    entityData: {},
+    radarData: {},
+    existingEntities: [],
+    ignoredEntities: []
+  };
 
-        const btn3 = document.createElement('button');
-        btn3.textContent = 'Event';
-        btn3.onclick = function () {
-          google.script.run
-            .withSuccessHandler(() => {
-              wrapper.remove();
-            })
-            .addCatalogEntity('Events', entityName);
-        };
+  const sessionCache = safeParse(`cachedData-${worldId}`) || {};
+  const localCache = safeParse(`cachedData-${worldId}`) || {};
+  const existingFromLocal = safeParse(`existingEntities-${worldId}`) || [];
+  const ignoredFromLocal = safeParse(`ignoredEntities-${worldId}`) || [];
 
-        const btn4 = document.createElement('button');
-        btn4.textContent = 'Ignore';
-        btn4.onclick = function () {
-          google.script.run
-            .withSuccessHandler((ignoredList) => {
-              console.log('Ignored entities:', ignoredList);
-              wrapper.remove();
-            })
-            .addIgnoredEntity(entityName);
-        };
+  window.cache = {
+    ...defaultCache,
+    ...localCache,
+    ...sessionCache,
+    existingEntities: [...new Set([...(sessionCache.existingEntities || []), ...existingFromLocal])],
+    ignoredEntities: [...new Set([...(sessionCache.ignoredEntities || []), ...ignoredFromLocal])]
+  };
 
-   
-        buttonGroup.appendChild(btn1);
-        buttonGroup.appendChild(btn2);
-        buttonGroup.appendChild(btn3);
-        buttonGroup.appendChild(btn4);
+  sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(window.cache));
+  console.log("Final merged cache:", window.cache);
 
-        wrapper.appendChild(nameSpan);
-        wrapper.appendChild(buttonGroup);
+  document.addEventListener('DOMContentLoaded', function () {
+  console.log("Page loaded. Starting background logging interval...");
 
-        container.appendChild(wrapper);
-      }
+  setInterval(() => {
+    const existingEntities = Array.isArray(window.cache.existingEntities) ? window.cache.existingEntities : [];
+    console.log("Background logging for existingEntities:", existingEntities);
 
-      // adds a new div every time the button is pressed with the entity name-->
-      // calls addNewDiv every 10,000 milliseconds (10 seconds) -->
-      setInterval(() => {
-        google.script.run.withSuccessHandler(function(newProperNouns) {
-          // Make sure newProperNouns is not undefined
-          if (newProperNouns) {
-            newProperNouns.forEach(newProperNoun => {
-              addNewDiv(newProperNoun);
-            });
-          } else {
-            console.error("No proper nouns returned.");
+    existingEntities.forEach(entityName => {
+      console.log(`Refreshing named ranges for ${entityName}`);
+      google.script.run.withSuccessHandler(() => {
+        fetchAndLogRangeInfo(entityName);
+      }).createNamedRangesForCharacter(entityName);
+
+    }, 7000);
+
+    google.script.run.withSuccessHandler(function (newProperNouns) {
+      if (!newProperNouns) return;
+      console.log("Detected new proper nouns:", newProperNouns);
+
+      newProperNouns.forEach(entityName => {
+        const isExisting = window.cache.existingEntities.includes(entityName);
+        const isIgnored = window.cache.ignoredEntities.includes(entityName);
+
+        if (!displayedEntities.has(entityName) && !isExisting && !isIgnored) {
+          displayedEntities.add(entityName);
+          console.log(`Prompting user for new entity: ${entityName}`);
+          addNewDiv(entityName);
+        }
+      });
+    }).getNewProperNouns();
+
+  }, 5000);
+});
+
+function fetchAndLogRangeInfo(entityName) {
+  const catalog = determineCatalog(entityName);
+  if (!trackedRanges[entityName]) trackedRanges[entityName] = new Set();
+
+  google.script.run.withSuccessHandler(function (existingFirestoreRangeIds) {
+    google.script.run.withSuccessHandler(function (infos) {
+      if (!infos || infos.length === 0) return;
+
+      infos.forEach(info => {
+        const rangeName = info.rangeName;
+        const excerpt = info.excerpt;
+
+        const isAlreadyInFirestore = existingFirestoreRangeIds.includes(rangeName);
+
+        //Rely on Firestore; cache is secondary (prevents re-logging in this session)
+        if (!isAlreadyInFirestore) {
+          console.log(`Logging ${rangeName} for ${entityName} (${catalog})`);
+
+          google.script.run.withSuccessHandler(() => {
+            trackedRanges[entityName].add(rangeName); // Add to cache AFTER success
+            saveTrackedRanges(trackedRanges);
+            console.log(`Logged ${rangeName} for ${entityName}`);
+          }).logNarrativeMentionWithRange(catalog, entityName, rangeName, excerpt);
+        } else {
+          console.log(`Skipped: ${rangeName} for ${entityName} (already in Firestore)`);
+        }
+      });
+    }).getAllNamedRangesForEntity(entityName);
+  }).getLoggedRangeIds(catalog, entityName);
+}
+
+
+
+  function addNewDiv(entityName) {
+    const container = document.getElementById('container');
+    const loadingMsg = document.getElementById('loading');
+
+    if (loadingMsg) {
+      loadingMsg.style.display = 'none'; // Hide once we add something
+    }
+    if (!container) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'entity-container';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = entityName;
+
+    const buttonGroup = document.createElement('div');
+    buttonGroup.className = 'button-group';
+
+    function createCatalogButton(label, type) {
+      const btn = document.createElement('button');
+      btn.textContent = label;
+      btn.onclick = function () {
+        google.script.run.withSuccessHandler(() => {
+          if (!window.cache.catalogData[type]) window.cache.catalogData[type] = [];
+          if (!window.cache.catalogData[type].includes(entityName)) {
+            window.cache.catalogData[type].push(entityName);
           }
-        }).getNewProperNouns();
-      }, 20000);
+          if (!window.cache.existingEntities.includes(entityName)) {
+            window.cache.existingEntities.push(entityName);
+          }
+
+          const existingCache = safeParse(`cachedData-${worldId}`) || {};
+          const mergedCatalogData = {
+            ...existingCache.catalogData,
+            ...window.cache.catalogData,
+            [type]: [...new Set([...(existingCache.catalogData?.[type] || []), ...(window.cache.catalogData?.[type] || [])])]
+          };
+          const mergedCache = {
+            ...existingCache,
+            ...window.cache,
+            catalogData: mergedCatalogData,
+            existingEntities: [...new Set([...(existingCache.existingEntities || []), ...window.cache.existingEntities])]
+          };
+
+          window.cache = mergedCache;
+          sessionStorage.setItem(`cachedData-${worldId}`, JSON.stringify(mergedCache));
+          localStorage.setItem(`existingEntities-${worldId}`, JSON.stringify(mergedCache.existingEntities));
+
+          wrapper.remove();
+        }).addCatalogEntity(type, entityName);
+      };
+      return btn;
+    }
+
+    buttonGroup.appendChild(createCatalogButton('Character', 'Characters'));
+    buttonGroup.appendChild(createCatalogButton('Location', 'Locations'));
+    buttonGroup.appendChild(createCatalogButton('Event', 'Events'));
+
+    const ignoreBtn = document.createElement('button');
+    ignoreBtn.textContent = 'Ignore';
+    ignoreBtn.onclick = function () {
+      google.script.run.withSuccessHandler(() => {
+        localStorage.setItem(`ignoredEntities-${worldId}`, JSON.stringify(window.cache.ignoredEntities));
+        wrapper.remove();
+      }).addIgnoredEntity(entityName);
+    };
+
+    buttonGroup.appendChild(ignoreBtn);
+    wrapper.appendChild(nameSpan);
+    wrapper.appendChild(buttonGroup);
+    container.appendChild(wrapper);
+    filterEntities();
+  }
+
+  function filterEntities() {
+    const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+    const allEntities = document.querySelectorAll('.entity-container');
+    allEntities.forEach(entity => {
+      const name = entity.querySelector('span').textContent.toLowerCase();
+      entity.style.display = name.includes(searchTerm) ? '' : 'none';
     });
-    </script>
+  }
+</script>
   </body>
 </html>
