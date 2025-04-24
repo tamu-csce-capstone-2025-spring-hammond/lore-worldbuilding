@@ -222,6 +222,7 @@ function deleteWorld(uid, worldId) {
   });
 }
 
+
 function loadCatalogDataFromFirestore(worldId) {
   console.log(`Attempting to fetch from Firestore with worldId: ${worldId}`);
   const props = PropertiesService.getUserProperties();

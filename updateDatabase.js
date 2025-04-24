@@ -477,7 +477,8 @@ function createNamedRangesForCharacter(entityName) {
 
     if (!existingNames.has(rangeName)) {
       const range = doc.newRange().addElement(paragraph).build();
-      doc.addNamedRange(rangeName, range);  
+
+      doc.addNamedRange(rangeName, range); 
       Logger.log(`Created named range: ${rangeName}`);
       existingNames.add(rangeName);
     }

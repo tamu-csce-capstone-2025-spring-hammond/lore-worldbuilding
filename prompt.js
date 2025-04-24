@@ -36,6 +36,7 @@ function callOpenAI(prompt) {
 
 
 
+
 function getParagraphsContainingCharacter(characterName) {
   var doc = DocumentApp.getActiveDocument();
   var body = doc.getBody();
@@ -61,7 +62,7 @@ function buildFilteredPromptForCharacter(characterName, matchedTextArray) {
 
 function summarizeCharacter(characterName) {  
   console.log('summarizeCharacter function is running');
-  Logger.log("summarizeCharacter function is running");
+
   var matches = getParagraphsContainingCharacter(characterName);
 
   if (matches.length === 0) {
@@ -74,7 +75,6 @@ function summarizeCharacter(characterName) {
   Logger.log("Character Summary:\n" + summary);
   return summary;
 }
-
 
 
 function getParagraphsContainingEvent(eventName) {
@@ -338,6 +338,7 @@ Text:
   }
 }
 
+
 function getOrGenerateCharacterAttributes(entityName) {
   const existing = getCatalogEntity("Characters", entityName);
   const fields = [
@@ -362,9 +363,19 @@ function getOrGenerateCharacterAttributes(entityName) {
 
 
 
-
-
-
-
-
+function summarize(catalog, name) {
+  console.log('Attempting a summary for a ' + catalog);
+  if (catalog == 'Character') {
+    summarizeCharacter(name);
+    return;
+  }
+  if (catalog == 'Event') {
+    summarizeEvent(name);
+    return;
+  }
+  if (catalog == 'Location') {
+    summarizeLocation(name);
+    return;
+  }
+}
 

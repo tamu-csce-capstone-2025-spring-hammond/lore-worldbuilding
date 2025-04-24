@@ -90,6 +90,7 @@ function findProperNouns() {
 
   matches = propMatches.concat(titleMatches);
 
+
   const excludeWords = new Set([
     "I", "She", "He", "You", "It", "We", "They", "The", "Page", "Table", "Section",
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
