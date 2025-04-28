@@ -2,14 +2,20 @@
   <head>
     <base target="_top">
     <script>
-      // Get the accent color dynamically
-      var accentColors = <?!= JSON.stringify(getAccentColor()) ?>;
-      var fSize = <?!= JSON.stringify(getFontSize()) ?>;
+      document.addEventListener('DOMContentLoaded', () => {
+        var accentColors = <?!= JSON.stringify(getAccentColor()) ?>;
+        var fSize = <?!= JSON.stringify(getFontSize()) ?>;
 
-      // Set the CSS variables
-      document.documentElement.style.setProperty('--accent-color', accentColors.color);
-      document.documentElement.style.setProperty('--accent-color-hover', accentColors.hover);
-      document.documentElement.style.setProperty('--font-size', fSize);
+        if (accentColors) {
+          document.documentElement.style.setProperty('--accent-color', accentColors.color || '#1e90ff');
+          document.documentElement.style.setProperty('--accent-color-hover', accentColors.hover || '#1c86ee');
+        }
+
+        if (fSize) {
+          document.documentElement.style.setProperty('--font-size', fSize);
+        }
+      });
+
     </script>
     <?!= include('defaultStyles'); ?>
     <?!= include('viewWritingModeStyles'); ?>
@@ -24,41 +30,63 @@
     <div id="container"></div>
 
 <script>
+  window.refreshQueue = [];
+
   function determineCatalog(entityName) {
-  for (const catalog in window.cache.catalogData) {
-    if (window.cache.catalogData[catalog].includes(entityName)) {
-      return catalog;
+    for (const catalog in window.cache.catalogData) {
+      if (window.cache.catalogData[catalog].includes(entityName)) {
+        return catalog;
+      }
     }
+    return "Characters"; // fallback
   }
-  return "Characters"; // fallback if not found
-}
 
   function navigateTo(page) {
-      google.script.run.showPage(page);
-    }
+    google.script.run.showPage(page);
+  }
 
   function loadTrackedRanges() {
-    const raw = sessionStorage.getItem("loggedRanges");
-    if (!raw) {
-      console.log("No existing loggedRanges cache found. Initializing empty structure.");
-      sessionStorage.setItem("loggedRanges", JSON.stringify({}));
-      return {};
-    }
-    const parsed = JSON.parse(raw);
-    const result = {};
-    for (const entity in parsed) {
-      result[entity] = new Set(parsed[entity]);
-    }
-    return result;
+  const worldId = localStorage.getItem("worldId") || "default";
+  const raw = sessionStorage.getItem(`loggedRanges-${worldId}`);
+  if (!raw) {
+    console.log(`No existing loggedRanges cache found for world: ${worldId}. Initializing empty structure.`);
+    sessionStorage.setItem(`loggedRanges-${worldId}`, JSON.stringify({}));
+    return {};
   }
+  const parsed = JSON.parse(raw);
+  const result = {};
+  for (const entity in parsed) {
+    result[entity] = new Set(parsed[entity]);
+  }
+  return result;
+}
+
 
   function saveTrackedRanges(tracked) {
-    const obj = {};
-    for (const entity in tracked) {
-      obj[entity] = Array.from(tracked[entity]);
-    }
-    sessionStorage.setItem("loggedRanges", JSON.stringify(obj));
+  const worldId = localStorage.getItem("worldId") || "default";
+  const obj = {};
+  for (const entity in tracked) {
+    obj[entity] = Array.from(tracked[entity]);
   }
+  sessionStorage.setItem(`loggedRanges-${worldId}`, JSON.stringify(obj));
+}
+
+
+  window.trackedRanges = loadTrackedRanges(); // Global trackedRanges
+  window.saveTrackedRanges = saveTrackedRanges;
+
+  // Utility to clear ranges for an entity manually
+  window.clearEntityLoggedRanges = function(entityName) {
+    if (window.trackedRanges[entityName]) {
+      window.trackedRanges[entityName].clear();
+      sessionStorage.setItem("loggedRanges", JSON.stringify(
+        Object.fromEntries(Object.entries(window.trackedRanges).map(([k, v]) => [k, Array.from(v)]))
+      ));
+      console.log(`Cleared loggedRanges for: ${entityName}`);
+    } else {
+      console.warn(`No loggedRanges found for: ${entityName}`);
+    }
+  };
 
   function safeParse(key) {
     try {
@@ -72,7 +100,6 @@
   }
 
   const displayedEntities = new Set();
-  const trackedRanges = loadTrackedRanges();
   const namedEntities = new Set();
   const worldId = localStorage.getItem("worldId") || "default";
 
@@ -101,19 +128,64 @@
   console.log("Final merged cache:", window.cache);
 
   document.addEventListener('DOMContentLoaded', function () {
-  console.log("Page loaded. Starting background logging interval...");
+  console.log("Page loaded. Starting smart background tasks...");
+
+  let isRefreshing = false;
+
+function processNextEntity() {
+  if (isRefreshing) {
+    setTimeout(processNextEntity, 2000);
+    return;
+  }
+
+  if (refreshQueue.length === 0) {
+    console.log("Refresh queue empty. Waiting for cooldown...");
+    setTimeout(processNextEntity, 2000);
+    return; //DO NOT refill refreshQueue immediately!
+  }
+
+  const entityName = refreshQueue.shift();
+  if (!entityName) {
+    setTimeout(processNextEntity, 2000);
+    return;
+  }
+
+  isRefreshing = true;
+  console.log(`Refreshing named ranges for: ${entityName}`);
+
+  google.script.run.withSuccessHandler(() => {
+    fetchAndLogRangeInfo(entityName);
+
+    setTimeout(() => {
+      refreshQueue.push(entityName);
+    }, 30000); // Wait 30s before allowing this entity to be refreshed again
+
+    isRefreshing = false;
+    setTimeout(processNextEntity, 2000); // keep the refresh engine running
+  }).createNamedRangesForCharacter(entityName);
+}
+
+
+
+
+
+  function startRefreshQueue() {
+    const existingEntities = Array.isArray(window.cache.existingEntities) ? window.cache.existingEntities : [];
+    if (existingEntities.length === 0) {
+      console.warn("No existingEntities yet. Retrying in 2 seconds...");
+      setTimeout(startRefreshQueue, 2000);
+      return;
+    }
+
+    console.log("Found existingEntities. Starting refresh queue:", existingEntities);
+    refreshQueue = [...existingEntities];
+    processNextEntity();
+  }
+
+  startRefreshQueue(); // start trying immediately
 
   setInterval(() => {
-    const existingEntities = Array.isArray(window.cache.existingEntities) ? window.cache.existingEntities : [];
-    console.log("Background logging for existingEntities:", existingEntities);
-
-    existingEntities.forEach(entityName => {
-      console.log(`Refreshing named ranges for ${entityName}`);
-      google.script.run.withSuccessHandler(() => {
-        fetchAndLogRangeInfo(entityName);
-      }).createNamedRangesForCharacter(entityName);
-
-    }, 7000);
+    console.log("Checking for new proper nouns...");
 
     google.script.run.withSuccessHandler(function (newProperNouns) {
       if (!newProperNouns) return;
@@ -130,36 +202,45 @@
         }
       });
     }).getNewProperNouns();
-
   }, 5000);
 });
 
-function fetchAndLogRangeInfo(entityName) {
+
+
+
+  function fetchAndLogRangeInfo(entityName) {
   const catalog = determineCatalog(entityName);
-  if (!trackedRanges[entityName]) trackedRanges[entityName] = new Set();
+  if (!window.trackedRanges[entityName]) window.trackedRanges[entityName] = new Set();
 
-  google.script.run.withSuccessHandler(function (existingFirestoreRangeIds) {
-    google.script.run.withSuccessHandler(function (infos) {
-      if (!infos || infos.length === 0) return;
+  google.script.run.withSuccessHandler(function (loggedRangeIdsFromFirestore) {
+    google.script.run.withSuccessHandler(function (rangeInfos) {
+      if (!rangeInfos || rangeInfos.length === 0) return;
 
-      infos.forEach(info => {
-        const rangeName = info.rangeName;
+      const seenInThisBatch = new Set();
+
+      rangeInfos.forEach(info => {
+        const rangeId = info.rangeName;
         const excerpt = info.excerpt;
 
-        const isAlreadyInFirestore = existingFirestoreRangeIds.includes(rangeName);
+        const alreadyLocal = window.trackedRanges[entityName].has(rangeId);
+        const alreadyRemote = loggedRangeIdsFromFirestore.includes(rangeId);
+        const alreadyQueuedThisRound = seenInThisBatch.has(rangeId);
 
-        //Rely on Firestore; cache is secondary (prevents re-logging in this session)
-        if (!isAlreadyInFirestore) {
-          console.log(`Logging ${rangeName} for ${entityName} (${catalog})`);
-
-          google.script.run.withSuccessHandler(() => {
-            trackedRanges[entityName].add(rangeName); // Add to cache AFTER success
-            saveTrackedRanges(trackedRanges);
-            console.log(`Logged ${rangeName} for ${entityName}`);
-          }).logNarrativeMentionWithRange(catalog, entityName, rangeName, excerpt);
-        } else {
-          console.log(`Skipped: ${rangeName} for ${entityName} (already in Firestore)`);
+        //REALLY IMPORTANT:
+        if (alreadyLocal || alreadyRemote || alreadyQueuedThisRound) {
+          console.warn(`Skipped duplicate: ${rangeId} — local: ${alreadyLocal}, remote: ${alreadyRemote}, queued: ${alreadyQueuedThisRound}`);
+          return;
         }
+
+        console.log(`Logging new unique narrative mention: ${rangeId}`);
+
+        seenInThisBatch.add(rangeId); // mark seen in this batch
+
+        google.script.run.withSuccessHandler(() => {
+          window.trackedRanges[entityName].add(rangeId);  //Only mark after successful save
+          saveTrackedRanges(window.trackedRanges);
+          console.log(`Confirmed saved locally: ${rangeId}`);
+        }).logNarrativeMentionWithRange(catalog, entityName, rangeId, excerpt);
       });
     }).getAllNamedRangesForEntity(entityName);
   }).getLoggedRangeIds(catalog, entityName);
@@ -167,13 +248,9 @@ function fetchAndLogRangeInfo(entityName) {
 
 
 
+
   function addNewDiv(entityName) {
     const container = document.getElementById('container');
-    const loadingMsg = document.getElementById('loading');
-
-    if (loadingMsg) {
-      loadingMsg.style.display = 'none'; // Hide once we add something
-    }
     if (!container) return;
 
     const wrapper = document.createElement('div');
@@ -250,6 +327,5 @@ function fetchAndLogRangeInfo(entityName) {
     });
   }
 </script>
-
   </body>
 </html>
