@@ -13,8 +13,9 @@
       document.documentElement.style.setProperty('--font-size', fSize);
     </script>
 
+    <?!= include('viewTimelineStyles.html'); ?>
     <?!= include('defaultStyles'); ?>
-
+    
     <style>
       body {
         margin: 0;
@@ -25,6 +26,13 @@
     <div class="back-btn-container">
       <a href="#" class="back-btn" onclick="navigateTo('landingPage')">Back</a>
     </div>
+
+    <h1>Super Mario Timeline</h1>
+    <p>Initial launch dates of games in the Super Mario series. </p>
+    <ul class="timeline" id="timelineList">
+      <li>Loading timeline...</li>
+    </ul>
+
 
     <script>
       function navigateTo(page) {
@@ -39,5 +47,44 @@
       window.addEventListener('load', adjustPageHeight);
       window.addEventListener('resize', adjustPageHeight);
     </script>
+
+    <script>
+      function fetchTimelineData() {
+        google.script.run.withSuccessHandler(renderTimeline).getAllEventsSortedByDate();
+      }
+
+      function renderTimeline(events) {
+        const timelineList = document.getElementById("timelineList");
+        timelineList.innerHTML = ""; // clear loading text
+
+        // Only include events with valid names and valid dates
+        const filtered = events.filter(event =>
+          event.Name && event.Name !== "Unnamed Event" &&
+          event.Date && /^\d{4}(-\d{2})?$/.test(event.Date)
+        );
+
+        filtered.forEach(event => {
+          const li = document.createElement("li");
+          li.innerHTML = `<time datetime="${event.Date}">${formatDate(event.Date)}</time>${event.Name}`;
+          timelineList.appendChild(li);
+        });
+      }
+
+      function formatDate(dateStr) {
+        // Handle "YYYY-MM" and "YYYY" formats safely
+        const parts = dateStr.split("-");
+        const year = parseInt(parts[0]);
+        const month = parts[1] ? parseInt(parts[1]) - 1 : 0; // JS months are 0-indexed
+
+        const date = new Date(Date.UTC(year, month));
+        const options = { year: "numeric", month: "long", timeZone: "UTC" };
+
+        return date.toLocaleDateString(undefined, options);
+      }
+
+      fetchTimelineData();
+    </script>
+
+
   </body>
 </html>

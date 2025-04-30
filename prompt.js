@@ -36,12 +36,23 @@ function callOpenAI(prompt) {
 
 
 
-
 function getParagraphsContainingCharacter(characterName) {
   var doc = DocumentApp.getActiveDocument();
   var body = doc.getBody();
   var paragraphs = body.getParagraphs();
   var matches = [];
+
+  /*const catalog = "Characters";
+  const existing = getCatalogEntity(catalog, entityName);
+  const aliases = existing["Aliases"];
+
+  var names = [];
+  names.push(characterName);
+  if (aliases) {
+    for (i=0; i<aliases.length; i++) {
+      names.push(aliases[i]);
+    }
+  }*/
 
   for (var i = 0; i < paragraphs.length; i++) {
     var text = paragraphs[i].getText();
@@ -62,7 +73,7 @@ function buildFilteredPromptForCharacter(characterName, matchedTextArray) {
 
 function summarizeCharacter(characterName) {  
   console.log('summarizeCharacter function is running');
-
+  Logger.log("summarizeCharacter function is running");
   var matches = getParagraphsContainingCharacter(characterName);
 
   if (matches.length === 0) {
@@ -75,6 +86,7 @@ function summarizeCharacter(characterName) {
   Logger.log("Character Summary:\n" + summary);
   return summary;
 }
+
 
 
 function getParagraphsContainingEvent(eventName) {
@@ -172,6 +184,7 @@ function summarize(catalog, name) {
   if (textCatalog == 'Locations') {
     return summarizeLocation(name);
   }
+  return 'Catalog not understood';
 }
 
 
@@ -338,44 +351,178 @@ Text:
   }
 }
 
+/*function getOrGenerateCharacterAttributes(entityName) {
+  const catalog = "Characters";
+  const existing = getCatalogEntity(catalog, entityName);
 
-function getOrGenerateCharacterAttributes(entityName) {
-  const existing = getCatalogEntity("Characters", entityName);
   const fields = [
     "HairColor", "EyeColor", "SkinColor", "Weight", "Build",
     "DistinctFeatures", "Height", "Gender", "Age", "Nationality"
   ];
 
   const result = {};
-  let missing = false;
+  const missingFields = [];
 
+  // Load each field and track which ones are missing
   fields.forEach(field => {
     const value = existing?.[field]?.stringValue;
-    if (!value) missing = true;
-    result[field] = value || "N/A";
+    if (!value) {
+      result[field] = "N/A";
+      missingFields.push(field);
+    } else {
+      result[field] = value;
+    }
   });
 
-  if (!missing) return result;
+  // Aliases are database only
+  result["Aliases"] = existing?.Aliases?.stringValue || "N/A";
 
-  const generated = inferCharacterAttributes(entityName);
-  return { ...result, ...generated };
+  // Only regenerate if something is missing
+  if (missingFields.length > 0) {
+    const generated = inferCharacterAttributes(entityName);
+
+    missingFields.forEach(field => {
+      if (generated?.[field]) {
+        result[field] = generated[field];
+      }
+    });
+  }
+
+  return result;
+}*/
+
+function getOrGenerateCharacterAttributes(entityName) {
+  const catalog = "Characters";
+  const existing = getCatalogEntity(catalog, entityName);
+
+  const fields = [
+    "HairColor", "EyeColor", "SkinColor", "Weight", "Build",
+    "DistinctFeatures", "Height", "Gender", "Age", "Nationality", "Aliases"
+  ];
+
+  const result = {};
+
+  /*fields.forEach(field => {
+    // result[field] = existing?.[field]?.stringValue || "N/A";
+    if (!result[field]) {
+      result[field] = "N/A";
+    }
+  });*/
+  for(i = 0; i<11; i++) {
+    if(!existing[fields[i]]) {
+      result[fields[i]] = "N/A";
+    }
+    else {
+      Logger.log(fields[i] + " exists: " + existing[fields[i]]);
+      result[fields[i]] = existing[fields[i]];
+    }
+  }
+
+  /*// Aliases are included, but never generated
+  result["Aliases"] = existing?.Aliases?.stringValue || "N/A";
+  // Logger.log(fields);*/
+  Logger.log(result);
+  Logger.log(result["Age"]);
+  return result;
+}
+
+function getOrGenerateEntityAttributes(entityName, catalogType) {
+  //entityName = "Bonfire Night";
+  //catalogType = "Events";
+  const catalog = catalogType || "Characters";  // fallback
+  const existing = getCatalogEntity(catalog, entityName);
+  Logger.log("Fetching attributes for: " + entityName + " in " + catalogType);
+
+
+  if (!existing) {
+    return {}; // no data found
+  }
+
+  /*const catalogFields = {
+    "Characters": [
+      "HairColor", "EyeColor", "SkinColor", "Weight", "Build",
+      "DistinctFeatures", "Height", "Gender", "Age", "Nationality", "Aliases"
+    ],
+    "Locations": [
+      "Terrain", "AssociatedCharacters", "AssociatedEvents"
+    ],
+    "Events": [
+      "Date", "Location", "AssociatedCharacters"
+    ]
+  };*/
+
+  var fields = [];
+
+  if (catalog == "Characters") {
+    fields = [
+      "HairColor", "EyeColor", "SkinColor", "Weight", "Build",
+      "DistinctFeatures", "Height", "Gender", "Age", "Nationality", "Aliases"
+    ];
+  }
+  else if (catalog == "Locations") {
+    fields = [
+      "Terrain", "AssociatedCharacters", "AssociatedEvents"
+    ];
+  }
+  else {
+    fields = [
+      "Date", "Location", "AssociatedCharacters"
+    ];
+  }
+
+  const result = {};
+  Logger.log(fields.length);
+
+  for(i = 0; i<fields.length; i++) {
+    if(!existing[fields[i]]) {
+      result[fields[i]] = "N/A";
+      Logger.log(fields[i] + " does not exist");
+    }
+    else {
+      Logger.log(fields[i] + " exists: " + existing[fields[i]]);
+      result[fields[i]] = existing[fields[i]];
+    }
+  }
+
+  Logger.log("About to return result");
+  return result;
+}
+
+function getAllEventsSortedByDate() {
+  const catalog = "Events";
+  const { uid, worldId } = getUserContext();
+  const path = `Users/${uid}/Worlds/${worldId}/${catalog}`;
+  const url = FIREBASE_URL + path;
+
+  const options = {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer " + getAccessToken(),
+      "Content-Type": "application/json"
+    },
+    muteHttpExceptions: true
+  };
+
+  const response = UrlFetchApp.fetch(url, options);
+  const data = JSON.parse(response.getContentText());
+  const entries = Object.entries(data.documents || {}).map(([id, doc]) => {
+    const fields = doc.fields || {};
+    return {
+      Name: fields.Name?.stringValue || "Unnamed Event",
+      Date: fields.Date?.stringValue || "N/A"
+    };
+  });
+
+  // Sort by date (assumes YYYY-MM format)
+  entries.sort((a, b) => (a.Date || "").localeCompare(b.Date || ""));
+  return entries;
 }
 
 
 
-function summarize(catalog, name) {
-  console.log('Attempting a summary for a ' + catalog);
-  if (catalog == 'Character') {
-    summarizeCharacter(name);
-    return;
-  }
-  if (catalog == 'Event') {
-    summarizeEvent(name);
-    return;
-  }
-  if (catalog == 'Location') {
-    summarizeLocation(name);
-    return;
-  }
-}
+
+
+
+
+
 

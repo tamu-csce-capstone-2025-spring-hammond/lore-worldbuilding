@@ -226,7 +226,6 @@ function processNextEntity() {
         const alreadyRemote = loggedRangeIdsFromFirestore.includes(rangeId);
         const alreadyQueuedThisRound = seenInThisBatch.has(rangeId);
 
-        //REALLY IMPORTANT:
         if (alreadyLocal || alreadyRemote || alreadyQueuedThisRound) {
           console.warn(`Skipped duplicate: ${rangeId} — local: ${alreadyLocal}, remote: ${alreadyRemote}, queued: ${alreadyQueuedThisRound}`);
           return;
@@ -237,7 +236,7 @@ function processNextEntity() {
         seenInThisBatch.add(rangeId); // mark seen in this batch
 
         google.script.run.withSuccessHandler(() => {
-          window.trackedRanges[entityName].add(rangeId);  //Only mark after successful save
+          window.trackedRanges[entityName].add(rangeId); 
           saveTrackedRanges(window.trackedRanges);
           console.log(`Confirmed saved locally: ${rangeId}`);
         }).logNarrativeMentionWithRange(catalog, entityName, rangeId, excerpt);
@@ -250,6 +249,7 @@ function processNextEntity() {
 
 
   function addNewDiv(entityName) {
+    document.getElementById("loading").style.visibility = "hidden";
     const container = document.getElementById('container');
     if (!container) return;
 
