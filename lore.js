@@ -82,14 +82,13 @@ function findProperNouns() {
   const doc = DocumentApp.getActiveDocument();
   const text = doc.getBody().getText();
 
-  const properNounRegex = /(?<![.!?]\s|^|")\b(?:Mr|Ms|Mrs|Dr|Prof)\.\s[A-Z][a-z]+(?:[\s|-][A-Z][a-z]+)*\b|(?<![.!?]\s|^|")\b[A-Z][a-z]+(?:[\s|-][A-Z][a-z]+)*\b/gm;
+  const properNounRegex = /(?<![.!?]\s|^|\n|\t|")\b(?:Mr|Ms|Mrs|Dr|Prof)\.\s[A-Z][a-z]+(?:[\s|-][A-Z][a-z]+)*\b|(?<![.!?]\s|^|")\b[A-Z][a-z]+(?:[\s|-][A-Z][a-z]+)*\b/gm;
   const propMatches = text.match(properNounRegex) || [];
 
   var titleNounRegex = /(?<![.!?]\s|^|")\b(?:Mr|Ms|Mrs|Dr|Prof)\.\s[A-Z][a-z]+(?:\s(?:of|the|van|von|de|du|del|la|le|da|di|der|den|ter|ten))\s[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b|(?<![.!?]\s|^|")\b[A-Z][a-z]+(?:\s(?:of|the|van|von|de|du|del|la|le|da|di|der|den|ter|ten))\s[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b/gm;
   var titleMatches = text.match(titleNounRegex) || [];
 
   matches = propMatches.concat(titleMatches);
-
 
   const excludeWords = new Set([
     "I", "She", "He", "You", "It", "We", "They", "The", "Page", "Table", "Section",

@@ -104,6 +104,8 @@
           window.catalogsList = catalogs;
           sessionStorage.setItem(`catalogsList-${worldId}`, JSON.stringify(catalogs));
 
+          //cachedCatalogs.sort((a, b) => a.localeCompare(b));
+
           displayCatalogs(catalogs);
 
           let pending = catalogs.length;
@@ -509,58 +511,58 @@
 
 
     function showEntityDetails(catalog, entityName) {
-  google.script.run.withSuccessHandler((entityData) => {
-    window.cache.entityData[entityName] = entityData;
-    const modal = document.getElementById("viewEntityModal");
-    const nameDisplay = document.getElementById("viewEntityName");
-    const attributesList = document.getElementById("entityAttributesList");
-    const occurrencesList = document.getElementById("entityOccurencesList");
+      google.script.run.withSuccessHandler((entityData) => {
+        window.cache.entityData[entityName] = entityData;
+        const modal = document.getElementById("viewEntityModal");
+        const nameDisplay = document.getElementById("viewEntityName");
+        const attributesList = document.getElementById("entityAttributesList");
+        const occurrencesList = document.getElementById("entityOccurencesList");
 
-    document.getElementById("summaryContent").innerText = "Loading summary...";
-    google.script.run.withSuccessHandler(function(description) {
-      if (description) {
-        document.getElementById("summaryContent").innerText = description;
-      } else {
-        google.script.run.withSuccessHandler(function(summary) {
-          document.getElementById("summaryContent").innerText = summary || "No summary available.";
-          if (summary) {
-            google.script.run.updateCatalogEntity(catalog, entityName, { Description: { stringValue: summary } });
+        document.getElementById("summaryContent").innerText = "Loading summary...";
+        google.script.run.withSuccessHandler(function(description) {
+          if (description) {
+            document.getElementById("summaryContent").innerText = description;
+          } else {
+            google.script.run.withSuccessHandler(function(summary) {
+              document.getElementById("summaryContent").innerText = summary || "No summary available.";
+              if (summary) {
+                google.script.run.updateCatalogEntity(catalog, entityName, { Description: { stringValue: summary } });
+              }
+            }).summarize(catalog, entityName);
           }
-        }).summarizeCharacter(entityName);
-      }
-    }).getSummary(catalog, entityName);
+        }).getSummary(catalog, entityName);
 
-    modal.setAttribute("data-entity", entityName);
-    modal.setAttribute("data-catalog", catalog);
-    nameDisplay.textContent = `${entityName}`;
+        modal.setAttribute("data-entity", entityName);
+        modal.setAttribute("data-catalog", catalog);
+        nameDisplay.textContent = `${entityName}`;
 
-    attributesList.innerHTML = "";
-    occurrencesList.innerHTML = "";
+        attributesList.innerHTML = "";
+        occurrencesList.innerHTML = "";
 
-    if (!entityData || Object.keys(entityData).length === 0) {
-      attributesList.innerHTML = "<li>No data available</li>";
-      occurrencesList.innerHTML = "<li>No data available</li>";
-    } else {
-      const mentions = entityData.NarrativeMentions || [];
-      mentions.forEach((mention, index) => {
-        const rangeId = mention.rangeId || mention.anchorId || "";
-        const excerpt = mention.excerpt || "(No excerpt)";
-        const li = document.createElement("li");
-        li.innerHTML = `<strong>Mention ${index + 1}:</strong> ${excerpt} 
-          <button onclick="goToNamedRange('${rangeId}')">Go to</button>`;
-        occurrencesList.appendChild(li);
-      });
+        if (!entityData || Object.keys(entityData).length === 0) {
+          attributesList.innerHTML = "<li>No data available</li>";
+          occurrencesList.innerHTML = "<li>No data available</li>";
+        } else {
+          const mentions = entityData.NarrativeMentions || [];
+          mentions.forEach((mention, index) => {
+            const rangeId = mention.rangeId || mention.anchorId || "";
+            const excerpt = mention.excerpt || "(No excerpt)";
+            const li = document.createElement("li");
+            li.innerHTML = `<strong>Mention ${index + 1}:</strong> ${excerpt} 
+              <button onclick="goToNamedRange('${rangeId}')">Go to</button>`;
+            occurrencesList.appendChild(li);
+          });
+        }
+
+        modal.style.display = "block";
+      }).getCatalogEntity(catalog, entityName);
     }
 
-    modal.style.display = "block";
-  }).getCatalogEntity(catalog, entityName);
-}
-
-function goToNamedRange(rangeId) {
-  google.script.run.withSuccessHandler(() => {
-    console.log("Navigated to named range:", rangeId);
-  }).navigateToNamedRange(rangeId);
-}
+    function goToNamedRange(rangeId) {
+      google.script.run.withSuccessHandler(() => {
+        console.log("Navigated to named range:", rangeId);
+      }).navigateToNamedRange(rangeId);
+    }
 
 
 
@@ -589,31 +591,31 @@ function goToNamedRange(rangeId) {
       if (tabInfo == 'Graphs') {
         const modal = document.getElementById("viewEntityModal");
         const entityName = modal.getAttribute("data-entity");
-        if (entityName) {
+        const catalog = modal.getAttribute("data-catalog");
+        if (entityName && catalog == "Characters") {
           console.log("Rendering chart of... " + entityName);
           loadRadarChart(entityName);
         } else {
           console.error("Entity name not set in the modal data attribute");
         }
       }
+
+      // If the Attributes tab is opened, load attributes
+      if (tabInfo == 'Attributes') {
+        const modal = document.getElementById("viewEntityModal");
+        const entityName = modal.getAttribute("data-entity");
+        const catalogType = modal.getAttribute("data-catalog") || "Characters";
+        console.log("The catalog type is " + catalogType);
+
+        if (entityName) {
+          console.log("Rendering info of... " + entityName);
+          loadCharacterInfo2(entityName, catalogType);
+        } else {
+          console.error("Entity name not set in the modal data attribute");
+        }
+      }
     }
 
-    /* function loadRadarChart(entityName) {
-      if (window.cache.radarData[entityName]) {
-        console.log("Using cached radar data for:", entityName);
-        renderChart(window.cache.radarData[entityName]);
-      } else {
-        google.script.run
-          .withSuccessHandler(function(data) {
-            window.cache.radarData[entityName] = data;
-            renderChart(data);
-          })
-          .withFailureHandler(function(error) {
-            console.error("Error calling getRadarData:", error);
-          })
-          .getCharacterPersonalityComparison(entityName);
-      }
-    } */
 
     function loadRadarChart(entityName) {
       const canvas = document.getElementById("radarChart");
@@ -652,6 +654,145 @@ function goToNamedRange(rangeId) {
           alert("Error generating trait data.");
         })
         .inferPersonalityTraits(entityName);
+    }
+
+    function loadCharacterInfo(entityName) {
+      const list = document.getElementById("entityAttributesList");
+      
+      // Show loading message while waiting
+      list.innerHTML = "<li><em>Loading attributes...</em></li>";
+
+      google.script.run.withSuccessHandler(function(data) {
+        list.innerHTML = ""; // Clear loading message once data arrives
+
+        const fields = [
+          "HairColor", "EyeColor", "SkinColor", "Weight", "Build",
+          "DistinctFeatures", "Height", "Gender", "Age", "Nationality", "Aliases"
+        ];
+
+        fields.forEach(field => {
+          const label = field.replace(/([A-Z])/g, ' $1').trim();
+          const value = data?.[field] || "N/A";
+
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <b>${label}:</b> <input type="text" id="field-${field}" value="${value}" />
+          `;
+          list.appendChild(li);
+        });
+      }).getOrGenerateCharacterAttributes(entityName);
+    }
+
+    const catalogFields = {
+      "Characters": [
+        "HairColor", "EyeColor", "SkinColor", "Weight", "Build",
+        "DistinctFeatures", "Height", "Gender", "Age", "Nationality", "Aliases"
+      ],
+      "Locations": [
+        "Terrain", "AssociatedCharacters", "AssociatedEvents"
+      ],
+      "Events": [
+        "Date", "Location", "AssociatedCharacters"
+      ]
+    };
+
+    function loadCharacterInfo2(entityName, catalogType) {
+      console.log("loadCharacterInfo2 for " + entityName + catalogType);
+      const list = document.getElementById("entityAttributesList");
+
+      list.innerHTML = "<li><em>Loading attributes...</em></li>";
+
+      const fields = catalogFields[catalogType] || [];
+      console.log(fields[0]);
+
+      google.script.run.withSuccessHandler(function(data) {
+        list.innerHTML = ""; // clear loading
+
+        fields.forEach(field => {
+          const label = field.replace(/([A-Z])/g, ' $1').trim();
+          const value = data?.[field] || "N/A";
+
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <b>${label}:</b> <input type="text" id="field-${field}" value="${value}" />
+          `;
+          list.appendChild(li);
+        });
+      }).getOrGenerateEntityAttributes(entityName, catalogType);
+    }
+
+
+    function saveCharacterAttributes() {
+      const modal = document.getElementById("viewEntityModal");
+      const entityName = modal.getAttribute("data-entity");
+
+      const fields = [
+        "HairColor", "EyeColor", "SkinColor", "Weight", "Build",
+        "DistinctFeatures", "Height", "Gender", "Age", "Nationality", "Aliases"
+      ];
+
+      fields.forEach(field => {
+        const input = document.getElementById(`field-${field}`);
+        if (input) {
+          const value = input.value;
+
+          // Update one field at a time
+          google.script.run
+            .withFailureHandler(err => console.error(`Failed to save ${field}:`, err))
+            .withSuccessHandler(() => console.log(`Saved ${field} = ${value}`))
+            .updateCatalogEntity("Characters", entityName, {
+              [field]: { stringValue: value }
+            });
+        }
+      });
+
+      alert("Character info saved!");
+    }
+
+    function saveCharacterAttributes2() {
+      console.log("Attempting to save");
+      const modal = document.getElementById("viewEntityModal");
+      const entityName = modal.getAttribute("data-entity");
+      const catalog = modal.getAttribute("data-catalog");
+
+      // Detect the catalog based on what the entity is stored under
+      //const catalog = window.cache?.catalogType; // fallback default
+      if (!catalog) {
+        console.error("Catalog type not found in window.cache. Cannot save attributes.");
+        return;
+      }
+      console.log("Catalog is " + catalog);
+
+      const catalogFields = {
+        "Characters": [
+          "HairColor", "EyeColor", "SkinColor", "Weight", "Build",
+          "DistinctFeatures", "Height", "Gender", "Age", "Nationality", "Aliases"
+        ],
+        "Locations": [
+          "Terrain", "AssociatedCharacters", "AssociatedEvents"
+        ],
+        "Events": [
+          "Date", "Location", "AssociatedCharacters"
+        ]
+      };
+
+      const fields = catalogFields[catalog] || [];
+
+      fields.forEach(field => {
+        const input = document.getElementById(`field-${field}`);
+        if (input) {
+          const value = input.value;
+
+          google.script.run
+            .withFailureHandler(err => console.error(`Failed to save ${field}:`, err))
+            .withSuccessHandler(() => console.log(`Saved ${field} = ${value}`))
+            .updateCatalogEntity(catalog, entityName, {
+              [field]: { stringValue: value || "N/A" }
+            });
+        }
+      });
+
+      alert(`${catalog.slice(0, -1)} info saved!`);
     }
 
 
@@ -737,20 +878,21 @@ function goToNamedRange(rangeId) {
           
 
           <div class="tab">
-            <button class="tablinks" id="summaryButton" onclick="openTab(event, 'Summary')">O</button>
+            <button class="tablinks" id="summaryButton" onclick="openTab(event, 'Summary')">Summary</button>
             <button class="tablinks" onclick="openTab(event, 'Attributes')">Info</button>
             <button class="tablinks" onclick="openTab(event, 'Graphs')">Charts</button>
-            <button class="tablinks" onclick="openTab(event, 'Occurences')">Occurences</button>
+            <button class="tablinks" onclick="openTab(event, 'Occurences')">Occur</button>
             <!-- <button class="tablinks" onclick="openTab(event, 'Relationships')">Relationships</button> -->
           </div>
 
-          <div id="Summary" class="tabcontent">
+          <div id="Summary" class="tabcontent" style="max-height: 400px; overflow-y: auto;">
             <p class="summary-information" id="summaryContent">Loading summary...</p>
             <button class="accent-btn" onclick="deleteEntity()" style="background-color: #c9807b"> Delete Entity </button>
           </div>
 
-          <div id="Attributes" class="tabcontent">
+          <div id="Attributes" class="tabcontent" style="max-height: 400px; overflow-y: auto;">
             <ul class="character-information" id="entityAttributesList"></ul>
+            <button class="accent-btn" onclick="saveCharacterAttributes2()" style="background-color: #c9807b">Save Info</button>
           </div>
 
           <div id="Graphs" class="tabcontent">
@@ -818,64 +960,6 @@ function goToNamedRange(rangeId) {
       }
 
 
-      /*function renderChart(data) {
-        console.log("Radar chart data received:", data);
-
-        if (!data || !data.initial || !data.current) {
-          console.error("Missing initial or current personality trait data.");
-          return;
-        }
-
-
-        const initial = data.initial;
-        const current = data.current;
-
-        const labels = Object.keys(initial);
-        const initialValues = labels.map(trait => parseInt(initial[trait]?.integerValue || 50));
-        const currentValues = labels.map(trait => parseInt(current[trait]?.integerValue || 50));
-
-        const canvas = document.getElementById('radarChart');
-        const ctx = canvas.getContext('2d');
-
-        if (canvas.chartInstance) {
-          canvas.chartInstance.destroy();
-        }
-
-        canvas.chartInstance = new Chart(ctx, {
-          type: 'radar',
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: 'Initial',
-                data: initialValues,
-                fill: true,
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                pointBackgroundColor: 'rgba(255, 99, 132, 1)'
-              },
-              {
-                label: 'Current',
-                data: currentValues,
-                fill: true,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                pointBackgroundColor: 'rgba(54, 162, 235, 1)'
-              }
-            ]
-          },
-          options: {
-            scales: {
-              r: {
-                beginAtZero: true,
-                min: 0,
-                max: 100
-              }
-            }
-          }
-        });
-      }*/
-
       function renderChart(data) {
         if (!data || !data.current) {
           console.error("Missing current personality trait data.");
@@ -931,6 +1015,7 @@ function goToNamedRange(rangeId) {
           }
         });
       }
+
 
 
     </script>

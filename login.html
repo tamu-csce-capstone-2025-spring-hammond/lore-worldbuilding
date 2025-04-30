@@ -12,7 +12,6 @@
     document.documentElement.style.setProperty('--accent-color-hover', accentColors.hover);
     document.documentElement.style.setProperty('--font-size', fSize);
   </script>
-
   <?!= include('defaultStyles'); ?>
   <?!= include('loginStyle'); ?>
   
@@ -101,9 +100,13 @@
   document.getElementById("mainContent").style.display = "block";
 }
 
+
   //Function that runs when selecting a world
   // - worldId: a string representing the worldID
   function selectWorld(worldId) {
+    resetFrontendCache();
+  setLoadingMessage("Loading World...");
+  showLoading();
   loreState.setWorldId(worldId);
   google.script.run.withSuccessHandler(() => {
     console.log(`UID set, now fetching world: ${worldId}`);
@@ -202,6 +205,18 @@
     .deleteWorld(loreState.uid, worldId);
   }
 
+  function setLoadingMessage(message) {
+  const loadingText = document.querySelector("#loadingOverlay div:nth-child(2)");
+  if (loadingText) {
+    loadingText.textContent = message;
+  }
+}
+
+
+  function showLoading(){
+    document.getElementById("loadingOverlay").style.display = "flex";
+  }
+
   function hideLoading() {
     document.getElementById("loadingOverlay").style.display = "none";
   }
@@ -211,9 +226,7 @@ function initializeSessionCache(worldId) {
   const catalogsKey = `catalogsList-${worldId}`;
   const existingKey = `existingEntities-${worldId}`;
   const ignoredKey = `ignoredEntities-${worldId}`;
-
   console.log("Attempting to fetch from Firestore with worldId:", worldId);
-
 
   if (!sessionStorage.getItem(cachedKey)) {
     const localFallback = localStorage.getItem(cachedKey);
@@ -234,9 +247,7 @@ function initializeSessionCache(worldId) {
         localStorage.setItem(existingKey, JSON.stringify(fallbackData.existingEntities));
         localStorage.setItem(ignoredKey, JSON.stringify(fallbackData.ignoredEntities));
         console.log("Restored cachedData from Firestore.");
-
       }).loadCatalogDataFromFirestore(worldId); 
-
     }
   }
 
@@ -255,6 +266,26 @@ function initializeSessionCache(worldId) {
     }
   }
 }
+
+function resetFrontendCache() {
+  console.log("Resetting frontend cache and memory for new world...");
+
+  // Reset globals
+  window.cache = {};
+  window.trackedRanges = {};
+  window.refreshQueue = [];
+  window.displayedEntities = new Set();
+  window.namedEntities = new Set();
+
+  // Clear world-specific sessionStorage keys
+  sessionStorage.clear(); 
+
+  // (only if you're very sure it's safe!)
+  // localStorage.removeItem(`cachedData-${oldWorldId}`);
+  // localStorage.removeItem(`existingEntities-${oldWorldId}`);
+  // localStorage.removeItem(`ignoredEntities-${oldWorldId}`);
+}
+
 
 
 
