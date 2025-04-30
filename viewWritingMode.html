@@ -141,7 +141,7 @@ function processNextEntity() {
   if (refreshQueue.length === 0) {
     console.log("Refresh queue empty. Waiting for cooldown...");
     setTimeout(processNextEntity, 2000);
-    return; 
+    return; //DO NOT refill refreshQueue immediately!
   }
 
   const entityName = refreshQueue.shift();
